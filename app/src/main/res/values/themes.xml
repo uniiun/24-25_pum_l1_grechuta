@@ -2,4 +2,9 @@
 <resources>
 
     <style name="Theme.Ballin" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.Ballin.Game" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Dostosuj motyw dla GameActivity -->
+        <item name="colorPrimary">@color/purple_200</item>
+        <item name="android:windowBackground">@color/black</item>
+    </style>
 </resources>
