@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:columnCount="3"
+        android:padding="16dp">
+
+        <!-- Przykładowe przyciski poziomów -->
+        <Button
+            android:id="@+id/level1Button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Level 1"
+            android:layout_margin="8dp" />
+
+        <Button
+            android:id="@+id/level2Button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Level 2"
+            android:layout_margin="8dp" />
+
+        <!-- Dodaj więcej przycisków poziomów -->
+    </GridLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
