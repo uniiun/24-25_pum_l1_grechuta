@@ -7,28 +7,27 @@ data class Ball(
     var dy: Float,
     val radius: Float
 ) {
-    fun updatePosition(width: Int, height: Int, dampingFactor: Float) {
-        // Aktualizacja pozycji
+    fun updatePosition(gridWidth: Int, gridHeight: Int, cellSize: Float, dampingFactor: Float) {
+        // Aktualizacja pozycji kulki
         x += dx
         y += dy
 
-        // Odbicie od ścian z tłumieniem
-        if (x - radius < 0 || x + radius > width) {
-            dx = -dx * dampingFactor // Zmniejsz prędkość po odbiciu
-            x = if (x - radius < 0) radius else width - radius
+        // Odbicie od lewej i prawej krawędzi siatki
+        if (x - radius < 0) {
+            x = radius
+            dx = -dx * dampingFactor
+        } else if (x + radius > gridWidth * cellSize) {
+            x = gridWidth * cellSize - radius
+            dx = -dx * dampingFactor
         }
 
-        if (y - radius < 0 || y + radius > height) {
-            dy = -dy * dampingFactor // Zmniejsz prędkość po odbiciu
-            y = if (y - radius < 0) radius else height - radius
+        // Odbicie od górnej i dolnej krawędzi siatki
+        if (y - radius < 0) {
+            y = radius
+            dy = -dy * dampingFactor
+        } else if (y + radius > gridHeight * cellSize) {
+            y = gridHeight * cellSize - radius
+            dy = -dy * dampingFactor
         }
-    }
-
-fun resetPosition(width: Int, height: Int) {
-        // Ustaw kulkę na środku ekranu
-        x = width / 2f
-        y = height / 2f
-        dx = 0f
-        dy = 0f
     }
 }
