@@ -1,11 +1,11 @@
 # **Ballin' – Interaktywna ścieżka projektu**
 
 ## **Milestone 1: Inicjalizacja projektu**
-- [ ] Utwórz nowy projekt w Android Studio.
-- [ ] Skonfiguruj minimalny SDK i dependencies:
-  - [ ] `CameraX`
-  - [ ] `Room` lub SQLite
-  - [ ] `SensorManager`
+- [x] Utwórz nowy projekt w Android Studio.
+- [x] Skonfiguruj minimalny SDK i dependencies:
+  - [x] `CameraX`
+  - [x] `Room` lub SQLite
+  - [x] `SensorManager`
 - [ ] Utwórz pliki strukturalne:
   - [ ] `MainActivity`
   - [ ] `GameActivity`
