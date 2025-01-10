@@ -16,6 +16,7 @@
         <!-- MainActivity - Główne menu aplikacji -->
         <activity
             android:name=".MainActivity"
+            android:screenOrientation="portrait"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.Ballin">
@@ -28,10 +29,12 @@
         <!-- GameActivity - Rozgrywka -->
         <activity
             android:name=".GameActivity"
+            android:screenOrientation="portrait"
             android:exported="true"
             android:theme="@style/Theme.Ballin.Game">
         </activity>
         <activity android:name=".LevelSelectActivity" />
     </application>
+    <uses-permission android:name="android.permission.BODY_SENSORS" />
 
 </manifest>
