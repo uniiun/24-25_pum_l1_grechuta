@@ -6,7 +6,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -20,17 +19,26 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             BallinTheme {
-                MainScreen(onStartGameClick = {
-                    val intent = Intent(this, GameActivity::class.java)
-                    startActivity(intent)
-                })
+                MainScreen(
+                    onStartGameClick = {
+                        val intent = Intent(this, GameActivity::class.java)
+                        startActivity(intent)
+                    },
+                    onSelectLevelClick = {
+                        val intent = Intent(this, LevelSelectActivity::class.java)
+                        startActivity(intent)
+                    }
+                )
             }
         }
     }
 }
 
 @Composable
-fun MainScreen(onStartGameClick: () -> Unit) {
+fun MainScreen(
+    onStartGameClick: () -> Unit,
+    onSelectLevelClick: () -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -48,7 +56,14 @@ fun MainScreen(onStartGameClick: () -> Unit) {
                 Text(text = "Start Game")
             }
 
-            Button(onClick = { /* Dodaj logikę wyjścia lub inną funkcję */ }) {
+            Button(
+                onClick = onSelectLevelClick,
+                modifier = Modifier.padding(bottom = 16.dp)
+            ) {
+                Text(text = "Select Level")
+            }
+
+            Button(onClick = { /* Dodaj logikę wyjścia */ }) {
                 Text(text = "Exit")
             }
         }
@@ -59,6 +74,9 @@ fun MainScreen(onStartGameClick: () -> Unit) {
 @Composable
 fun MainScreenPreview() {
     BallinTheme {
-        MainScreen(onStartGameClick = {})
+        MainScreen(
+            onStartGameClick = {},
+            onSelectLevelClick = {}
+        )
     }
 }

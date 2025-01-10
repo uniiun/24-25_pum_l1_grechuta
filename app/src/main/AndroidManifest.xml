@@ -31,7 +31,7 @@
             android:exported="true"
             android:theme="@style/Theme.Ballin.Game">
         </activity>
-
+        <activity android:name=".LevelSelectActivity" />
     </application>
 
 </manifest>
