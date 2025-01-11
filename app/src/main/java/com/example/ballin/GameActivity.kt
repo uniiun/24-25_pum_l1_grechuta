@@ -18,13 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.ballin.model.Ball
-import com.example.ballin.model.Cell
-import com.example.ballin.model.CellType
-import com.example.ballin.model.Obstacle
-import com.example.ballin.model.ObstacleType
-import com.example.ballin.model.Level
-import com.example.ballin.model.LevelManager
+import com.example.ballin.model.*
 import com.example.ballin.ui.theme.BallinTheme
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -39,6 +33,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
     private var rotationX by mutableStateOf(0f)
     private var rotationY by mutableStateOf(0f)
     private var score by mutableStateOf(0)
+    private var isPaused by mutableStateOf(false)
 
     private val gravityFactor = 0.5f
     private val dampingFactor = 0.98f
@@ -54,30 +49,42 @@ class GameActivity : ComponentActivity(), SensorEventListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Inicjalizacja LevelManager i załadowanie poziomów z JSON-a
         levelManager = LevelManager(this)
         levelManager.loadLevelsFromJson("levels.json")
 
+        // Obliczenie rozmiaru komórki na podstawie wymiarów ekranu i siatki
         val screenWidth = resources.displayMetrics.widthPixels.toFloat()
         val screenHeight = resources.displayMetrics.heightPixels.toFloat()
         cellSize = minOf(screenWidth / gridWidth, screenHeight / gridHeight)
 
+        // Pobranie aktualnego poziomu i konfiguracja siatki
         val currentLevel = levelManager.getCurrentLevel()
         if (currentLevel != null) {
             setupLevel(currentLevel)
         }
 
+        // Inicjalizacja SensorManager i żyroskopu
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
 
+        // Ustawienie treści ekranu
         setContent {
             BallinTheme {
-                GameScreen(
-                    ball = ball,
-                    score = score,
-                    grid = grid,
-                    cellSize = cellSize,
-                    onPauseClick = { pauseGame() }
-                )
+                if (isPaused) {
+                    PauseScreen(
+                        onResumeClick = { resumeGame() },
+                        onExitClick = { finish() } // Powrót do menu głównego
+                    )
+                } else {
+                    GameScreen(
+                        ball = ball,
+                        score = score,
+                        grid = grid,
+                        cellSize = cellSize,
+                        onPauseClick = { pauseGame() } // Pauza gry
+                    )
+                }
             }
         }
     }
@@ -112,8 +119,10 @@ class GameActivity : ComponentActivity(), SensorEventListener {
 
     override fun onResume() {
         super.onResume()
-        gyroscopeSensor?.let {
-            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME)
+        if (!isPaused) {
+            gyroscopeSensor?.let {
+                sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME)
+            }
         }
     }
 
@@ -123,7 +132,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
-        if (event?.sensor?.type == Sensor.TYPE_GYROSCOPE) {
+        if (!isPaused && event?.sensor?.type == Sensor.TYPE_GYROSCOPE) {
             rotationX = event.values[1]
             rotationY = event.values[0]
 
@@ -206,7 +215,17 @@ class GameActivity : ComponentActivity(), SensorEventListener {
         ball.dy *= dampingFactor
     }
 
-    private fun pauseGame() {}
+    private fun pauseGame() {
+        isPaused = true
+        sensorManager.unregisterListener(this)
+    }
+
+    private fun resumeGame() {
+        isPaused = false
+        gyroscopeSensor?.let {
+            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME)
+        }
+    }
 
     private fun calculateScore(x: Float, y: Float): Int {
         return ((x + y) / 10).toInt()
@@ -284,21 +303,20 @@ fun GameScreen(
     }
 }
 
-@Preview(showBackground = true)
 @Composable
-fun GameScreenPreview() {
-    val mockGrid = Array(15) { Array(10) { Cell() } }
-    mockGrid[14][5].type = CellType.START
-    mockGrid[0][5].type = CellType.GOAL
-    mockGrid[7][3].type = CellType.OBSTACLE_RECTANGLE
-
-    BallinTheme {
-        GameScreen(
-            ball = Ball(x = 540f, y = 960f, dx = 0f, dy = 0f, radius = 50f),
-            score = 0,
-            grid = mockGrid,
-            cellSize = 100f,
-            onPauseClick = {}
-        )
+fun PauseScreen(onResumeClick: () -> Unit, onExitClick: () -> Unit) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.align(Alignment.Center),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Button(onClick = onResumeClick) {
+                Text(text = "Kontynuuj")
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(onClick = onExitClick) {
+                Text(text = "Powrót do Menu")
+            }
+        }
     }
 }
