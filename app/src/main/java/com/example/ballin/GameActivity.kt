@@ -21,10 +21,13 @@ import androidx.compose.ui.unit.dp
 import com.example.ballin.model.Ball
 import com.example.ballin.model.Cell
 import com.example.ballin.model.CellType
+import com.example.ballin.model.Level
+import com.example.ballin.model.LevelManager
 import com.example.ballin.ui.theme.BallinTheme
 
 class GameActivity : ComponentActivity(), SensorEventListener {
 
+    private lateinit var levelManager: LevelManager
     private lateinit var sensorManager: SensorManager
     private var gyroscopeSensor: Sensor? = null
 
@@ -47,31 +50,24 @@ class GameActivity : ComponentActivity(), SensorEventListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        levelManager = LevelManager(this)
+        levelManager.loadLevelsFromJson("levels.json")
+
+        val screenWidth = resources.displayMetrics.widthPixels.toFloat()
+        val screenHeight = resources.displayMetrics.heightPixels.toFloat()
+
+        cellSize = minOf(screenWidth / gridWidth, screenHeight / gridHeight)
+
+        val currentLevel = levelManager.getCurrentLevel()
+        if (currentLevel != null) {
+            setupLevel(currentLevel)
+        }
+
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
 
-        setupGrid()
-
-        // Znalezienie pozycji miejsca startowego
-        val startCell = grid.flatten().firstOrNull { it.type == CellType.START }
-        val startRow = grid.indexOfFirst { row -> row.contains(startCell) }
-        val startCol = grid[startRow].indexOf(startCell)
-
-        ball = Ball(
-            x = startCol * cellSize + cellSize / 2,
-            y = startRow * cellSize + cellSize / 2,
-            dx = 0f,
-            dy = 0f,
-            radius = 50f
-        )
-
         setContent {
             BallinTheme {
-                val screenWidth = resources.displayMetrics.widthPixels.toFloat()
-                val screenHeight = resources.displayMetrics.heightPixels.toFloat()
-
-                cellSize = minOf(screenWidth / gridWidth, screenHeight / gridHeight)
-
                 GameScreen(
                     ball = ball,
                     score = score,
@@ -84,15 +80,28 @@ class GameActivity : ComponentActivity(), SensorEventListener {
         }
     }
 
+    private fun setupLevel(level: Level) {
+        // Wyczyszczenie siatki
+        for (row in grid.indices) {
+            for (col in grid[row].indices) {
+                grid[row][col].type = CellType.EMPTY
+            }
+        }
 
-    private fun setupGrid() {
-        // Ustawienie startu i mety
-        grid[gridHeight - 1][gridWidth / 2].type = CellType.START
-        grid[0][gridWidth / 2].type = CellType.GOAL
+        // Ustawienie pozycji startowej kulki
+        ball.x = level.startPosition.x * cellSize + cellSize / 2
+        ball.y = level.startPosition.y * cellSize + cellSize / 2
+
+        // Ustawienie mety
+        grid[level.goalPosition.y][level.goalPosition.x].type = CellType.GOAL
 
         // Dodanie przeszkód
-        grid[5][4].type = CellType.OBSTACLE
-        grid[8][6].type = CellType.OBSTACLE
+        for (obstacle in level.obstacles) {
+            grid[obstacle.y][obstacle.x].type = CellType.OBSTACLE
+        }
+
+        // Ustawienie startu
+        grid[level.startPosition.y][level.startPosition.x].type = CellType.START
     }
 
     override fun onResume() {
@@ -135,20 +144,11 @@ class GameActivity : ComponentActivity(), SensorEventListener {
 
     private fun restartGame() {
         score = 0
-        // Znalezienie pozycji miejsca startowego
-        val startCell = grid.flatten().firstOrNull { it.type == CellType.START }
-        val startRow = grid.indexOfFirst { row -> row.contains(startCell) }
-        val startCol = grid[startRow].indexOf(startCell)
-
-        ball = Ball(
-            x = startCol * cellSize + cellSize / 2,
-            y = startRow * cellSize + cellSize / 2,
-            dx = 0f,
-            dy = 0f,
-            radius = 50f
-        )
+        val currentLevel = levelManager.getCurrentLevel()
+        if (currentLevel != null) {
+            setupLevel(currentLevel)
+        }
     }
-
 
     private fun calculateScore(x: Float, y: Float): Int {
         return ((x + y) / 10).toInt()
@@ -165,9 +165,7 @@ fun GameScreen(
     onRestartClick: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        // Canvas gry
         Canvas(modifier = Modifier.fillMaxSize()) {
-            // Renderowanie siatki
             for (row in grid.indices) {
                 for (col in grid[row].indices) {
                     val cell = grid[row][col]
@@ -189,7 +187,6 @@ fun GameScreen(
                 }
             }
 
-            // Rysowanie kulki
             drawCircle(
                 color = Color.Blue,
                 radius = ball.radius,
@@ -197,7 +194,6 @@ fun GameScreen(
             )
         }
 
-        // Wyświetlanie wyniku
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -213,7 +209,6 @@ fun GameScreen(
             Text(text = "Pozycja kulki Y: ${ball.y.toInt()}")
         }
 
-        // Przycisk Pauzy
         Button(
             onClick = onPauseClick,
             modifier = Modifier
@@ -223,7 +218,6 @@ fun GameScreen(
             Text(text = "Pauza")
         }
 
-        // Przycisk Restartu
         Button(
             onClick = onRestartClick,
             modifier = Modifier
@@ -249,8 +243,8 @@ fun GameScreenPreview() {
             score = 0,
             grid = mockGrid,
             cellSize = 100f,
-            onPauseClick = { /* Podgląd pauzy */ },
-            onRestartClick = { /* Podgląd restartu */ }
+            onPauseClick = { },
+            onRestartClick = { }
         )
     }
 }
