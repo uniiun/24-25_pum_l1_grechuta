@@ -15,24 +15,24 @@
 ---
 
 ## **Milestone 2: Mechanika sterowania**
-- [ ] Odczytuj dane z żyroskopu za pomocą API `SensorManager`.
-- [ ] Stwórz klasę `Ball` z podstawowymi atrybutami:
-  - [ ] Pozycja.
-  - [ ] Prędkość.
-- [ ] Zaimplementuj ruch kulki w ograniczonym obszarze (Canvas/SurfaceView).
-- [ ] Dodaj podstawową grawitację (kulka spada i odbija się od ścian).
+- [x] Odczytuj dane z żyroskopu za pomocą API `SensorManager`.
+- [x] Stwórz klasę `Ball` z podstawowymi atrybutami:
+  - [x] Pozycja.
+  - [x] Prędkość.
+- [x] Zaimplementuj ruch kulki w ograniczonym obszarze (Canvas/SurfaceView).
+- [x] Dodaj podstawową grawitację (kulka spada i odbija się od ścian).
 
 ---
 
 ## **Milestone 3: System poziomów – wstępna struktura**
-- [ ] Zaprojektuj strukturę poziomów (JSON lub SQLite).
-- [ ] Stwórz klasę `Level`:
-  - [ ] Wymiary planszy.
-  - [ ] Pozycja startowa kulki.
-  - [ ] Lista przeszkód.
-  - [ ] Cel (pozycja końcowa).
-- [ ] Zaimplementuj `LevelManager` do ładowania poziomów z JSON.
-- [ ] Utwórz testowy poziom.
+- [x] Zaprojektuj strukturę poziomów (JSON lub SQLite).
+- [x] Stwórz klasę `Level`:
+  - [x] Wymiary planszy.
+  - [x] Pozycja startowa kulki.
+  - [x] Lista przeszkód.
+  - [x] Cel (pozycja końcowa).
+- [x] Zaimplementuj `LevelManager` do ładowania poziomów z JSON.
+- [x] Utwórz testowy poziom.
 
 ---
 
