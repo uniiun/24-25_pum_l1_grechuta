@@ -72,8 +72,11 @@ dependencies {
     implementation("androidx.room:room-ktx:2.5.1")
 
     // Lifecycle (ViewModel i LiveData)
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.6.1")
+    implementation ("androidx.compose.ui:ui:1.5.1")
+    implementation ("androidx.compose.ui:ui-tooling:1.5.1")
+    implementation ("androidx.compose.foundation:foundation:1.5.1")
+    implementation ("androidx.activity:activity-compose:1.7.2")
+    implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
 
     // Material Design
     implementation("com.google.android.material:material:1.9.0")

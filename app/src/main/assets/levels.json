@@ -8,5 +8,16 @@
       { "x": 4, "y": 8, "type": "RECTANGLE" },
       { "x": 6, "y": 10, "type": "CIRCLE" }
     ]
+  },
+  {
+    "width": 10,
+    "height": 20,
+    "startPosition": { "x": 5, "y": 19 },
+    "goalPosition": { "x": 5, "y": 0 },
+    "obstacles": [
+      { "x": 2, "y": 1, "type": "RECTANGLE" },
+      { "x": 3, "y": 4, "type": "CIRCLE" },
+      { "x": 8, "y": 6, "type": "CIRCLE" }
+    ]
   }
 ]

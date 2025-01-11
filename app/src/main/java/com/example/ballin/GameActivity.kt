@@ -16,12 +16,20 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.ballin.model.*
 import com.example.ballin.ui.theme.BallinTheme
 import kotlin.math.pow
 import kotlin.math.sqrt
+import androidx.camera.core.CameraSelector
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
+import androidx.core.content.ContextCompat
+import androidx.compose.ui.viewinterop.AndroidView
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.result.contract.ActivityResultContracts
+
 
 class GameActivity : ComponentActivity(), SensorEventListener {
 
@@ -34,6 +42,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
     private var rotationY by mutableStateOf(0f)
     private var score by mutableStateOf(0)
     private var isPaused by mutableStateOf(false)
+    private var useCameraBackground by mutableStateOf(false)
 
     private val gravityFactor = 0.5f
     private val dampingFactor = 0.98f
@@ -42,6 +51,15 @@ class GameActivity : ComponentActivity(), SensorEventListener {
     private val gridHeight = 20
     private var cellSize by mutableStateOf(0f)
 
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+            if (isGranted) {
+                setupCamera() // Włącz kamerę, jeśli zezwolenie zostało udzielone
+            } else {
+                // Poinformuj użytkownika, że kamera nie będzie działać
+            }
+        }
+
     private val grid: Array<Array<Cell>> = Array(gridHeight) {
         Array(gridWidth) { Cell() }
     }
@@ -49,32 +67,40 @@ class GameActivity : ComponentActivity(), SensorEventListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Inicjalizacja LevelManager i załadowanie poziomów z JSON-a
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            setupCamera() // Zezwolenie przyznane - uruchom kamerę
+        } else {
+            // Poproś użytkownika o zezwolenie na kamerę
+            requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+
         levelManager = LevelManager(this)
         levelManager.loadLevelsFromJson("levels.json")
 
-        // Obliczenie rozmiaru komórki na podstawie wymiarów ekranu i siatki
         val screenWidth = resources.displayMetrics.widthPixels.toFloat()
         val screenHeight = resources.displayMetrics.heightPixels.toFloat()
         cellSize = minOf(screenWidth / gridWidth, screenHeight / gridHeight)
 
-        // Pobranie aktualnego poziomu i konfiguracja siatki
         val currentLevel = levelManager.getCurrentLevel()
         if (currentLevel != null) {
             setupLevel(currentLevel)
         }
 
-        // Inicjalizacja SensorManager i żyroskopu
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
 
-        // Ustawienie treści ekranu
         setContent {
             BallinTheme {
                 if (isPaused) {
                     PauseScreen(
                         onResumeClick = { resumeGame() },
-                        onExitClick = { finish() } // Powrót do menu głównego
+                        onExitClick = { finish() }, // Powrót do menu głównego
+                        onToggleCameraClick = { useCameraBackground = !useCameraBackground },
+                        isCameraEnabled = useCameraBackground // Dodanie parametru
                     )
                 } else {
                     GameScreen(
@@ -82,12 +108,45 @@ class GameActivity : ComponentActivity(), SensorEventListener {
                         score = score,
                         grid = grid,
                         cellSize = cellSize,
-                        onPauseClick = { pauseGame() } // Pauza gry
+                        onPauseClick = { pauseGame() },
+                        useCameraBackground = useCameraBackground // Dodanie obsługi tła
                     )
                 }
             }
         }
     }
+
+    private fun setupCamera() {
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+
+        cameraProviderFuture.addListener({
+            // Uzyskaj dostęp do CameraProvider
+            val cameraProvider = cameraProviderFuture.get()
+
+            // Utwórz instancję Preview
+            val preview = androidx.camera.core.Preview.Builder().build()
+
+            // Powiąż Preview z PreviewView
+            val previewView = PreviewView(this).apply {
+                scaleType = PreviewView.ScaleType.FILL_CENTER
+            }
+            preview.setSurfaceProvider(previewView.surfaceProvider)
+
+            // Ustaw selektor kamery (domyślna kamera tylna)
+            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+            try {
+                // Odwiąż wszystkie użycia kamery i przypisz nowe
+                cameraProvider.unbindAll()
+                cameraProvider.bindToLifecycle(
+                    this, cameraSelector, preview
+                )
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }, ContextCompat.getMainExecutor(this))
+    }
+
 
     private fun setupLevel(level: Level) {
         // Wyczyszczenie siatki
@@ -165,6 +224,13 @@ class GameActivity : ComponentActivity(), SensorEventListener {
                 val y = row * cellSize
 
                 when (cell.type) {
+                    CellType.GOAL -> {
+                        // Sprawdzamy, czy kulka dotknęła mety
+                        if (ball.x + ball.radius > x && ball.x - ball.radius < x + cellSize &&
+                            ball.y + ball.radius > y && ball.y - ball.radius < y + cellSize) {
+                            onLevelComplete()
+                        }
+                    }
                     CellType.OBSTACLE_RECTANGLE -> {
                         if (ball.x + ball.radius > x && ball.x - ball.radius < x + cellSize &&
                             ball.y + ball.radius > y && ball.y - ball.radius < y + cellSize) {
@@ -184,6 +250,20 @@ class GameActivity : ComponentActivity(), SensorEventListener {
                     else -> {}
                 }
             }
+        }
+    }
+
+    private fun onLevelComplete() {
+        if (levelManager.currentLevelIndex < levelManager.getLevels().size - 1) {
+            // Załaduj następny poziom
+            levelManager.nextLevel()
+            val nextLevel = levelManager.getCurrentLevel()
+            if (nextLevel != null) {
+                setupLevel(nextLevel)
+            }
+        } else {
+            // Wszystkie poziomy ukończone
+            finish() // Możesz zastąpić to wyświetleniem komunikatu o końcu gry
         }
     }
 
@@ -230,7 +310,10 @@ class GameActivity : ComponentActivity(), SensorEventListener {
     private fun calculateScore(x: Float, y: Float): Int {
         return ((x + y) / 10).toInt()
     }
+
+
 }
+
 
 @Composable
 fun GameScreen(
@@ -238,9 +321,44 @@ fun GameScreen(
     score: Int,
     grid: Array<Array<Cell>>,
     cellSize: Float,
-    onPauseClick: () -> Unit
+    onPauseClick: () -> Unit,
+    useCameraBackground: Boolean
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
+        if (useCameraBackground) {
+            AndroidView(
+                factory = { context ->
+                    val previewView = PreviewView(context).apply {
+                        scaleType = PreviewView.ScaleType.FILL_CENTER
+                    }
+
+                    val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+                    cameraProviderFuture.addListener({
+                        val cameraProvider = cameraProviderFuture.get()
+                        val preview = androidx.camera.core.Preview.Builder().build().also {
+                            it.setSurfaceProvider(previewView.surfaceProvider)
+                        }
+
+                        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+                        try {
+                            cameraProvider.unbindAll()
+                            cameraProvider.bindToLifecycle(
+                                context as ComponentActivity,
+                                cameraSelector,
+                                preview
+                            )
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }, ContextCompat.getMainExecutor(context))
+
+                    previewView
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
         Canvas(modifier = Modifier.fillMaxSize()) {
             for (row in grid.indices) {
                 for (col in grid[row].indices) {
@@ -249,7 +367,7 @@ fun GameScreen(
                     val y = row * cellSize
 
                     val color = when (cell.type) {
-                        CellType.EMPTY -> Color.LightGray
+                        CellType.EMPTY -> Color.Transparent
                         CellType.OBSTACLE_RECTANGLE -> Color.Red
                         CellType.OBSTACLE_CIRCLE -> Color.Yellow
                         CellType.START -> Color.Green
@@ -303,8 +421,14 @@ fun GameScreen(
     }
 }
 
+
 @Composable
-fun PauseScreen(onResumeClick: () -> Unit, onExitClick: () -> Unit) {
+fun PauseScreen(
+    onResumeClick: () -> Unit,
+    onExitClick: () -> Unit,
+    onToggleCameraClick: () -> Unit,
+    isCameraEnabled: Boolean
+) {
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier.align(Alignment.Center),
@@ -314,9 +438,16 @@ fun PauseScreen(onResumeClick: () -> Unit, onExitClick: () -> Unit) {
                 Text(text = "Kontynuuj")
             }
             Spacer(modifier = Modifier.height(16.dp))
+            Button(onClick = onToggleCameraClick) {
+                Text(
+                    text = if (isCameraEnabled) "Wyłącz kamerę" else "Włącz kamerę"
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = onExitClick) {
                 Text(text = "Powrót do Menu")
             }
         }
     }
 }
+
