@@ -29,6 +29,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.graphics.toArgb
 
 
 class GameActivity : ComponentActivity(), SensorEventListener {
@@ -51,6 +52,8 @@ class GameActivity : ComponentActivity(), SensorEventListener {
     private val gridHeight = 20
     private var cellSize by mutableStateOf(0f)
 
+    private var themeColor by mutableStateOf(androidx.compose.ui.graphics.Color.Transparent.toArgb())
+
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (isGranted) {
@@ -67,6 +70,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Sprawdzanie i żądanie zezwolenia na kamerę
         if (ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.CAMERA
@@ -78,21 +82,37 @@ class GameActivity : ComponentActivity(), SensorEventListener {
             requestPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
 
+        // Inicjalizacja menedżera poziomów i ładowanie poziomów z JSON
         levelManager = LevelManager(this)
         levelManager.loadLevelsFromJson("levels.json")
 
+        // Obliczanie rozmiaru komórki w oparciu o ekran
         val screenWidth = resources.displayMetrics.widthPixels.toFloat()
         val screenHeight = resources.displayMetrics.heightPixels.toFloat()
         cellSize = minOf(screenWidth / gridWidth, screenHeight / gridHeight)
 
+        // Pobranie aktualnego poziomu i ustawienie poziomu
         val currentLevel = levelManager.getCurrentLevel()
         if (currentLevel != null) {
             setupLevel(currentLevel)
         }
 
+        // Inicjalizacja menedżera czujników i żyroskopu
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
 
+        // Dynamiczna zmienna kolorów motywu
+        var themeColor by mutableStateOf(
+            currentLevel?.themeColor ?: androidx.compose.ui.graphics.Color.Transparent.toArgb()
+        )
+
+        // Funkcja do przeładowania motywu po zmianie poziomu
+        fun updateThemeColor() {
+            val nextLevel = levelManager.getCurrentLevel()
+            themeColor = nextLevel?.themeColor ?: androidx.compose.ui.graphics.Color.Transparent.toArgb()
+        }
+
+        // Ustawienie zawartości widoku
         setContent {
             BallinTheme {
                 if (isPaused) {
@@ -100,7 +120,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
                         onResumeClick = { resumeGame() },
                         onExitClick = { finish() }, // Powrót do menu głównego
                         onToggleCameraClick = { useCameraBackground = !useCameraBackground },
-                        isCameraEnabled = useCameraBackground // Dodanie parametru
+                        isCameraEnabled = useCameraBackground
                     )
                 } else {
                     GameScreen(
@@ -109,12 +129,20 @@ class GameActivity : ComponentActivity(), SensorEventListener {
                         grid = grid,
                         cellSize = cellSize,
                         onPauseClick = { pauseGame() },
-                        useCameraBackground = useCameraBackground // Dodanie obsługi tła
+                        useCameraBackground = useCameraBackground,
+                        themeColor = themeColor // Przekazanie dynamicznego koloru motywu
                     )
                 }
             }
         }
-    }
+
+        // Aktualizacja koloru motywu przy zmianie poziomu
+        levelManager.addLevelChangeListener {
+            updateThemeColor() // Zmiana koloru motywu
+        }
+
+
+}
 
     private fun setupCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
@@ -260,6 +288,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
             val nextLevel = levelManager.getCurrentLevel()
             if (nextLevel != null) {
                 setupLevel(nextLevel)
+                themeColor = nextLevel.themeColor ?: Color.Transparent.toArgb()
             }
         } else {
             // Wszystkie poziomy ukończone
@@ -322,7 +351,8 @@ fun GameScreen(
     grid: Array<Array<Cell>>,
     cellSize: Float,
     onPauseClick: () -> Unit,
-    useCameraBackground: Boolean
+    useCameraBackground: Boolean,
+    themeColor: Int
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         if (useCameraBackground) {
@@ -331,34 +361,35 @@ fun GameScreen(
                     val previewView = PreviewView(context).apply {
                         scaleType = PreviewView.ScaleType.FILL_CENTER
                     }
-
                     val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
                     cameraProviderFuture.addListener({
                         val cameraProvider = cameraProviderFuture.get()
                         val preview = androidx.camera.core.Preview.Builder().build().also {
                             it.setSurfaceProvider(previewView.surfaceProvider)
                         }
-
                         val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
-                        try {
-                            cameraProvider.unbindAll()
-                            cameraProvider.bindToLifecycle(
-                                context as ComponentActivity,
-                                cameraSelector,
-                                preview
-                            )
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
+                        cameraProvider.unbindAll()
+                        cameraProvider.bindToLifecycle(
+                            context as ComponentActivity,
+                            cameraSelector,
+                            preview
+                        )
                     }, ContextCompat.getMainExecutor(context))
-
                     previewView
                 },
                 modifier = Modifier.fillMaxSize()
             )
         }
 
+        // Nakładka koloru tematycznego
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            drawRect(
+                color = androidx.compose.ui.graphics.Color(themeColor).copy(alpha = 0.3f),
+                size = this.size
+            )
+        }
+
+        // Siatka i kulka
         Canvas(modifier = Modifier.fillMaxSize()) {
             for (row in grid.indices) {
                 for (col in grid[row].indices) {
@@ -420,6 +451,7 @@ fun GameScreen(
         }
     }
 }
+
 
 
 @Composable

@@ -4,11 +4,16 @@ import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
-
 class LevelManager(private val context: Context) {
     private val gson = Gson()
     private var levels: List<Level> = emptyList()
     var currentLevelIndex: Int = 0
+        set(value) {
+            field = value
+            notifyLevelChange() // Powiadomienie o zmianie poziomu
+        }
+
+    private var levelChangeListeners: MutableList<() -> Unit> = mutableListOf()
 
     fun loadLevelsFromJson(fileName: String) {
         val json = context.assets.open(fileName).bufferedReader().use { it.readText() }
@@ -32,5 +37,20 @@ class LevelManager(private val context: Context) {
 
     fun getLevels(): List<Level> {
         return levels
+    }
+
+    // Dodanie słuchacza zmian poziomu
+    fun addLevelChangeListener(listener: () -> Unit) {
+        levelChangeListeners.add(listener)
+    }
+
+    // Usunięcie słuchacza zmian poziomu
+    fun removeLevelChangeListener(listener: () -> Unit) {
+        levelChangeListeners.remove(listener)
+    }
+
+    // Powiadamianie wszystkich słuchaczy
+    private fun notifyLevelChange() {
+        levelChangeListeners.forEach { it.invoke() }
     }
 }
