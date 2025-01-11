@@ -1,46 +1,61 @@
 package com.example.ballin
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.ballin.model.LevelManager
 import com.example.ballin.ui.theme.BallinTheme
 
 class LevelSelectActivity : ComponentActivity() {
+
+    private lateinit var levelManager: LevelManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        levelManager = LevelManager(this)
+        levelManager.loadLevelsFromJson("levels.json")
+
         setContent {
             BallinTheme {
-                LevelSelectScreen(
-                    onLevel1Click = { /* Obsługa wyboru poziomu 1 */ },
-                    onLevel2Click = { /* Obsługa wyboru poziomu 2 */ }
-                )
+                LevelSelectionScreen(levelManager = levelManager, onLevelSelected = { levelIndex ->
+                    val intent = Intent(this, GameActivity::class.java).apply {
+                        putExtra("LEVEL_INDEX", levelIndex)
+                    }
+                    startActivity(intent)
+                })
             }
         }
     }
 }
 
 @Composable
-fun LevelSelectScreen(
-    onLevel1Click: () -> Unit,
-    onLevel2Click: () -> Unit
-) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+fun LevelSelectionScreen(levelManager: LevelManager, onLevelSelected: (Int) -> Unit) {
+    val levels = remember { levelManager.getLevels() }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Button(onClick = onLevel1Click, modifier = Modifier.padding(bottom = 16.dp)) {
-            Text(text = "Level 1")
-        }
-        Button(onClick = onLevel2Click) {
-            Text(text = "Level 2")
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            levels.forEachIndexed { index, level ->
+                Button(
+                    onClick = { onLevelSelected(index) },
+                    modifier = Modifier.padding(vertical = 8.dp)
+                ) {
+                    Text(text = "Level ${index + 1}")
+                }
+            }
         }
     }
 }

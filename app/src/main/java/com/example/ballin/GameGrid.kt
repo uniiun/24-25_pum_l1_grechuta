@@ -24,9 +24,13 @@ fun GameGrid(grid: Array<Array<Cell>>, cellSize: Float) {
                 val color = when (cell.type) {
                     CellType.EMPTY -> Color.LightGray
                     CellType.OBSTACLE -> Color.DarkGray
+                    CellType.OBSTACLE_RECTANGLE -> Color.Red
+                    CellType.OBSTACLE_CIRCLE -> Color.Yellow
                     CellType.START -> Color.Green
-                    CellType.GOAL -> Color.Red
+                    CellType.GOAL -> Color.Blue
+                    else -> Color.Black
                 }
+
 
                 drawRect(
                     color = color,

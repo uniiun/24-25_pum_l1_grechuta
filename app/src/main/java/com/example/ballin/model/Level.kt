@@ -13,7 +13,4 @@ data class Level(
     val obstacles: List<Obstacle>
 )
 
-data class Obstacle(
-    val x: Int,
-    val y: Int
-)
+

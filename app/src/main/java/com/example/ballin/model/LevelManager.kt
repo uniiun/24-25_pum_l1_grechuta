@@ -29,4 +29,8 @@ class LevelManager(private val context: Context) {
     fun resetToFirstLevel() {
         currentLevelIndex = 0
     }
+
+    fun getLevels(): List<Level> {
+        return levels
+    }
 }

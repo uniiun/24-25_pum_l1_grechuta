@@ -21,9 +21,13 @@ import androidx.compose.ui.unit.dp
 import com.example.ballin.model.Ball
 import com.example.ballin.model.Cell
 import com.example.ballin.model.CellType
+import com.example.ballin.model.Obstacle
+import com.example.ballin.model.ObstacleType
 import com.example.ballin.model.Level
 import com.example.ballin.model.LevelManager
 import com.example.ballin.ui.theme.BallinTheme
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 class GameActivity : ComponentActivity(), SensorEventListener {
 
@@ -55,7 +59,6 @@ class GameActivity : ComponentActivity(), SensorEventListener {
 
         val screenWidth = resources.displayMetrics.widthPixels.toFloat()
         val screenHeight = resources.displayMetrics.heightPixels.toFloat()
-
         cellSize = minOf(screenWidth / gridWidth, screenHeight / gridHeight)
 
         val currentLevel = levelManager.getCurrentLevel()
@@ -73,8 +76,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
                     score = score,
                     grid = grid,
                     cellSize = cellSize,
-                    onPauseClick = { pauseGame() },
-                    onRestartClick = { restartGame() }
+                    onPauseClick = { pauseGame() }
                 )
             }
         }
@@ -97,7 +99,11 @@ class GameActivity : ComponentActivity(), SensorEventListener {
 
         // Dodanie przeszkód
         for (obstacle in level.obstacles) {
-            grid[obstacle.y][obstacle.x].type = CellType.OBSTACLE
+            when (obstacle.type) {
+                ObstacleType.RECTANGLE -> grid[obstacle.y][obstacle.x].type = CellType.OBSTACLE_RECTANGLE
+                ObstacleType.CIRCLE -> grid[obstacle.y][obstacle.x].type = CellType.OBSTACLE_CIRCLE
+                else -> grid[obstacle.y][obstacle.x].type = CellType.OBSTACLE
+            }
         }
 
         // Ustawienie startu
@@ -134,21 +140,73 @@ class GameActivity : ComponentActivity(), SensorEventListener {
                 dampingFactor = dampingFactor
             )
 
+            checkCollision()
+
             score = calculateScore(ball.x, ball.y)
         }
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
-    private fun pauseGame() {}
+    private fun checkCollision() {
+        for (row in grid.indices) {
+            for (col in grid[row].indices) {
+                val cell = grid[row][col]
+                val x = col * cellSize
+                val y = row * cellSize
 
-    private fun restartGame() {
-        score = 0
-        val currentLevel = levelManager.getCurrentLevel()
-        if (currentLevel != null) {
-            setupLevel(currentLevel)
+                when (cell.type) {
+                    CellType.OBSTACLE_RECTANGLE -> {
+                        if (ball.x + ball.radius > x && ball.x - ball.radius < x + cellSize &&
+                            ball.y + ball.radius > y && ball.y - ball.radius < y + cellSize) {
+                            handleRectangleCollision(x, y)
+                        }
+                    }
+                    CellType.OBSTACLE_CIRCLE -> {
+                        val circleCenterX = x + cellSize / 2
+                        val circleCenterY = y + cellSize / 2
+                        val distance = sqrt(
+                            (ball.x - circleCenterX).pow(2) + (ball.y - circleCenterY).pow(2)
+                        )
+                        if (distance < ball.radius + cellSize / 2) {
+                            handleCircleCollision(circleCenterX, circleCenterY)
+                        }
+                    }
+                    else -> {}
+                }
+            }
         }
     }
+
+    private fun handleRectangleCollision(rectX: Float, rectY: Float) {
+        if (ball.x < rectX || ball.x > rectX + cellSize) {
+            ball.dx = -ball.dx
+        }
+        if (ball.y < rectY || ball.y > rectY + cellSize) {
+            ball.dy = -ball.dy
+        }
+        ball.dx *= dampingFactor
+        ball.dy *= dampingFactor
+    }
+
+    private fun handleCircleCollision(circleX: Float, circleY: Float) {
+        val dx = ball.x - circleX
+        val dy = ball.y - circleY
+        val distance = sqrt(dx.pow(2) + dy.pow(2))
+
+        if (distance != 0.0f) {
+            val nx = dx / distance
+            val ny = dy / distance
+            val dotProduct = ball.dx * nx + ball.dy * ny
+
+            ball.dx -= 2 * dotProduct * nx
+            ball.dy -= 2 * dotProduct * ny
+        }
+        ball.dx *= dampingFactor
+        ball.dy *= dampingFactor
+    }
+
+    private fun pauseGame() {}
 
     private fun calculateScore(x: Float, y: Float): Int {
         return ((x + y) / 10).toInt()
@@ -161,8 +219,7 @@ fun GameScreen(
     score: Int,
     grid: Array<Array<Cell>>,
     cellSize: Float,
-    onPauseClick: () -> Unit,
-    onRestartClick: () -> Unit
+    onPauseClick: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -174,16 +231,26 @@ fun GameScreen(
 
                     val color = when (cell.type) {
                         CellType.EMPTY -> Color.LightGray
-                        CellType.OBSTACLE -> Color.DarkGray
+                        CellType.OBSTACLE_RECTANGLE -> Color.Red
+                        CellType.OBSTACLE_CIRCLE -> Color.Yellow
                         CellType.START -> Color.Green
-                        CellType.GOAL -> Color.Red
+                        CellType.GOAL -> Color.Blue
+                        else -> Color.DarkGray
                     }
 
-                    drawRect(
-                        color = color,
-                        topLeft = androidx.compose.ui.geometry.Offset(x, y),
-                        size = androidx.compose.ui.geometry.Size(cellSize, cellSize)
-                    )
+                    if (cell.type == CellType.OBSTACLE_CIRCLE) {
+                        drawCircle(
+                            color = color,
+                            center = androidx.compose.ui.geometry.Offset(x + cellSize / 2, y + cellSize / 2),
+                            radius = cellSize / 2
+                        )
+                    } else {
+                        drawRect(
+                            color = color,
+                            topLeft = androidx.compose.ui.geometry.Offset(x, y),
+                            size = androidx.compose.ui.geometry.Size(cellSize, cellSize)
+                        )
+                    }
                 }
             }
 
@@ -204,9 +271,6 @@ fun GameScreen(
                 text = "Wynik: $score",
                 style = MaterialTheme.typography.titleLarge
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Pozycja kulki X: ${ball.x.toInt()}")
-            Text(text = "Pozycja kulki Y: ${ball.y.toInt()}")
         }
 
         Button(
@@ -217,15 +281,6 @@ fun GameScreen(
         ) {
             Text(text = "Pauza")
         }
-
-        Button(
-            onClick = onRestartClick,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(16.dp)
-        ) {
-            Text(text = "Restart")
-        }
     }
 }
 
@@ -235,7 +290,7 @@ fun GameScreenPreview() {
     val mockGrid = Array(15) { Array(10) { Cell() } }
     mockGrid[14][5].type = CellType.START
     mockGrid[0][5].type = CellType.GOAL
-    mockGrid[7][3].type = CellType.OBSTACLE
+    mockGrid[7][3].type = CellType.OBSTACLE_RECTANGLE
 
     BallinTheme {
         GameScreen(
@@ -243,8 +298,7 @@ fun GameScreenPreview() {
             score = 0,
             grid = mockGrid,
             cellSize = 100f,
-            onPauseClick = { },
-            onRestartClick = { }
+            onPauseClick = {}
         )
     }
 }
