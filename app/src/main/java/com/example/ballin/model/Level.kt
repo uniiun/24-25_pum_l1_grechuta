@@ -11,7 +11,7 @@ data class Level(
     val startPosition: Position,
     val goalPosition: Position,
     val obstacles: List<Obstacle>,
-    val themeColor: Int
+    val themeColor: String
 )
 
 

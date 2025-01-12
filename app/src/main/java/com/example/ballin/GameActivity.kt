@@ -1,5 +1,6 @@
 package com.example.ballin
 
+import android.util.Log
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -54,6 +55,9 @@ class GameActivity : ComponentActivity(), SensorEventListener {
 
     private var themeColor by mutableStateOf(androidx.compose.ui.graphics.Color.Transparent.toArgb())
 
+    private var lightSensor: Sensor? = null
+    private var lightLevel by mutableStateOf(0f)
+
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (isGranted) {
@@ -100,17 +104,20 @@ class GameActivity : ComponentActivity(), SensorEventListener {
         // Inicjalizacja menedżera czujników i żyroskopu
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
+        lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
+        Log.d("GameActivity", "Light sensor available: ${lightSensor != null}")
 
-        // Dynamiczna zmienna kolorów motywu
-        var themeColor by mutableStateOf(
-            currentLevel?.themeColor ?: androidx.compose.ui.graphics.Color.Transparent.toArgb()
-        )
+
 
         // Funkcja do przeładowania motywu po zmianie poziomu
         fun updateThemeColor() {
             val nextLevel = levelManager.getCurrentLevel()
-            themeColor = nextLevel?.themeColor ?: androidx.compose.ui.graphics.Color.Transparent.toArgb()
+            themeColor = nextLevel?.themeColor?.let { hexColor ->
+                adjustColorBrightness(hexColor, lightLevel) // Przekształć HEX na ARGB i dostosuj jasność
+            } ?: Color.Transparent.toArgb() // Domyślny kolor przezroczysty, jeśli brak danych
         }
+
+
 
         // Ustawienie zawartości widoku
         setContent {
@@ -118,7 +125,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
                 if (isPaused) {
                     PauseScreen(
                         onResumeClick = { resumeGame() },
-                        onExitClick = { finish() }, // Powrót do menu głównego
+                        onExitClick = { finish() },
                         onToggleCameraClick = { useCameraBackground = !useCameraBackground },
                         isCameraEnabled = useCameraBackground
                     )
@@ -130,7 +137,8 @@ class GameActivity : ComponentActivity(), SensorEventListener {
                         cellSize = cellSize,
                         onPauseClick = { pauseGame() },
                         useCameraBackground = useCameraBackground,
-                        themeColor = themeColor // Przekazanie dynamicznego koloru motywu
+                        themeColor = themeColor, // Dynamiczny kolor tła
+                        lightLevel = lightLevel // Przekazanie poziomu światła
                     )
                 }
             }
@@ -210,6 +218,9 @@ class GameActivity : ComponentActivity(), SensorEventListener {
             gyroscopeSensor?.let {
                 sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME)
             }
+            lightSensor?.let {
+                sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
+            }
         }
     }
 
@@ -219,6 +230,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
+
         if (!isPaused && event?.sensor?.type == Sensor.TYPE_GYROSCOPE) {
             rotationX = event.values[1]
             rotationY = event.values[0]
@@ -237,12 +249,35 @@ class GameActivity : ComponentActivity(), SensorEventListener {
             )
 
             checkCollision()
-
             score = calculateScore(ball.x, ball.y)
+        }  else if (event?.sensor?.type == Sensor.TYPE_LIGHT) {
+            lightLevel = event.values[0] // Odczytaj poziom światła
+            Log.d("GameActivity", "Light sensor changed: $lightLevel lx")
+            themeColor = adjustColorBrightness(levelManager.getCurrentLevel()?.themeColor ?: "#FFFFFF", lightLevel)
         }
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+
+    fun adjustColorBrightness(baseColor: String, lightLevel: Float): Int {
+        val color = Color(android.graphics.Color.parseColor(baseColor)) // Przekształcenie HEX na Color
+        val brightnessFactor = when {
+            lightLevel > 10000 -> 1.2f // Jasne światło: rozjaśnij o 20%
+            lightLevel > 5000 -> 1.1f // Średnie światło: rozjaśnij o 10%
+            lightLevel > 1000 -> 0.9f // Przyciemnione światło: przyciemnij o 10%
+            else -> 0.7f // Bardzo ciemne światło: przyciemnij o 30%
+        }
+        // Dostosowanie jasności z uwzględnieniem ograniczeń 0..1
+        val red = (color.red * brightnessFactor).coerceIn(0f, 1f)
+        val green = (color.green * brightnessFactor).coerceIn(0f, 1f)
+        val blue = (color.blue * brightnessFactor).coerceIn(0f, 1f)
+
+        return Color(red, green, blue).toArgb() // Zwrot koloru w formacie ARGB
+    }
+
+    fun hexToArgb(hex: String): Int {
+        return android.graphics.Color.parseColor(hex)
+    }
 
     private fun checkCollision() {
         for (row in grid.indices) {
@@ -288,7 +323,6 @@ class GameActivity : ComponentActivity(), SensorEventListener {
             val nextLevel = levelManager.getCurrentLevel()
             if (nextLevel != null) {
                 setupLevel(nextLevel)
-                themeColor = nextLevel.themeColor ?: Color.Transparent.toArgb()
             }
         } else {
             // Wszystkie poziomy ukończone
@@ -334,7 +368,21 @@ class GameActivity : ComponentActivity(), SensorEventListener {
         gyroscopeSensor?.let {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME)
         }
+        lightSensor?.let {
+            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
+        }
     }
+
+    private fun calculateThemeColor(lightLevel: Float): Int {
+        return if (lightLevel > 10000) { // Wysokie światło
+            androidx.compose.ui.graphics.Color(0xFFFFF59D).toArgb() // Jasne, dzienne tło (żółtawe)
+        } else if (lightLevel > 5000) { // Średnie światło
+            androidx.compose.ui.graphics.Color(0xFF90CAF9).toArgb() // Jasne niebieskawe
+        } else { // Niskie światło
+            androidx.compose.ui.graphics.Color(0xFF37474F).toArgb() // Ciemne, nocne tło
+        }
+    }
+
 
     private fun calculateScore(x: Float, y: Float): Int {
         return ((x + y) / 10).toInt()
@@ -352,7 +400,8 @@ fun GameScreen(
     cellSize: Float,
     onPauseClick: () -> Unit,
     useCameraBackground: Boolean,
-    themeColor: Int
+    themeColor: Int, // ThemeColor w formacie ARGB
+    lightLevel: Float // Dodano: aktualny poziom jasności
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         if (useCameraBackground) {
@@ -439,6 +488,15 @@ fun GameScreen(
                 text = "Wynik: $score",
                 style = MaterialTheme.typography.titleLarge
             )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Jasność: ${lightLevel.toInt()} lx", // Wyświetlenie poziomu światła
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Text(
+                text = "Kolor tła: #${Integer.toHexString(themeColor)}", // Wyświetlenie koloru tła w HEX
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
 
         Button(
@@ -451,6 +509,7 @@ fun GameScreen(
         }
     }
 }
+
 
 
 
