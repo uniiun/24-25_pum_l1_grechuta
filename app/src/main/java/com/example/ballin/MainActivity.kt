@@ -12,17 +12,30 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.ballin.ui.theme.BallinTheme
+import com.google.android.material.button.MaterialButton
+import android.widget.ImageView
+import androidx.appcompat.app.AppCompatActivity
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            BallinTheme {
-                MainMenu(onStartGameClick = {
-                    val intent = Intent(this, LevelSelectActivity::class.java)
-                    startActivity(intent)
-                })
-            }
+        setContentView(R.layout.activity_main)
+
+        // Przycisk START
+        val startButton = findViewById<MaterialButton>(R.id.startGameButton)
+        startButton.setOnClickListener {
+            // Przejdź do gry
+            val intent = Intent(this,  LevelSelectActivity::class.java)
+            startActivity(intent)
+        }
+
+        // Przycisk WYBIERZ KOLOR
+        val selectColorButton = findViewById<MaterialButton>(R.id.selectColorButton)
+        selectColorButton.setOnClickListener {
+            // Przejdź do wyboru koloru
+            val intent = Intent(this, ColorPickerActivity::class.java)
+            startActivity(intent)
         }
     }
 }

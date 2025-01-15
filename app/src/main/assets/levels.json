@@ -20,5 +20,20 @@
       { "x": 6, "y": 5, "type": "CIRCLE" }
     ],
     "themeColor": "#03A9F4"
+  },
+  {
+    "width": 10,
+    "height": 20,
+    "startPosition": { "x": 0, "y": 19 },
+    "goalPosition": { "x": 0, "y": 0 },
+    "obstacles": [
+      { "x": 2, "y": 10, "type": "RECTANGLE" },
+      { "x": 1, "y": 18, "type": "CIRCLE" },
+      { "x": 3, "y": 17, "type": "CIRCLE" },
+      { "x": 7, "y": 10, "type": "RECTANGLE" },
+      { "x": 6, "y": 10, "type": "RECTANGLE" },
+      { "x": 9, "y": 10, "type": "RECTANGLE" }
+    ],
+    "themeColor": "#032137"
   }
 ]

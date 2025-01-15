@@ -11,19 +11,6 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Sound Settings"
-            android:textSize="18sp"
-            android:layout_marginBottom="8dp" />
-
-        <Switch
-            android:id="@+id/soundSwitch"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Enable Sound" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
             android:text="Ball Color"
             android:textSize="18sp"
             android:layout_marginTop="16dp"

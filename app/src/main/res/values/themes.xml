@@ -1,10 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
-    <style name="Theme.Ballin" parent="android:Theme.Material.Light.NoActionBar" />
-    <style name="Theme.Ballin.Game" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Dostosuj motyw dla GameActivity -->
-        <item name="colorPrimary">@color/purple_200</item>
-        <item name="android:windowBackground">@color/black</item>
+    <!-- Główny motyw aplikacji -->
+    <style name="Theme.Ballin" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Kolory podstawowe -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryVariant">@color/secondary</item>
+        <item name="colorSecondary">@color/accent</item>
+        <item name="colorOnPrimary">@color/highlight</item>
+
+        <item name="android:statusBarColor">@color/primary</item>
+
+        <!-- Kolor tła aplikacji -->
+        <item name="android:windowBackground">@color/primary</item>
+
+        <!-- Dostosowanie dla Material Components -->
+        <item name="materialButtonStyle">@style/Widget.MaterialComponents.Button</item>
     </style>
+
+    <!-- Motyw dla GameActivity -->
+    <style name="Theme.Ballin.Game" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Kolory podstawowe -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryVariant">@color/secondary</item>
+        <item name="colorSecondary">@color/accent</item>
+        <item name="colorOnPrimary">@color/highlight</item>
+
+        <!-- Kolor tła gry -->
+        <item name="android:windowBackground">@color/primary</item>
+    </style>
+
 </resources>
