@@ -123,14 +123,13 @@ fun GameScreen(
             )
         }
 
-        Button(
+        StyledButton(
+            text = "Pauza",
             onClick = onPauseClick,
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(16.dp)
-        ) {
-            Text(text = "Pauza")
-        }
+        )
     }
 }
 
@@ -146,19 +145,13 @@ fun PauseScreen(
             modifier = Modifier.align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Button(onClick = onResumeClick) {
-                Text(text = "Kontynuuj")
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = onToggleCameraClick) {
-                Text(
-                    text = if (isCameraEnabled) "Wyłącz kamerę" else "Włącz kamerę"
-                )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = onExitClick) {
-                Text(text = "Powrót do Menu")
-            }
+            StyledButton(text = "Kontynuuj", onClick = onResumeClick)
+            StyledButton(
+                text = if (isCameraEnabled) "Wyłącz kamerę" else "Włącz kamerę",
+                onClick = onToggleCameraClick
+            )
+            StyledButton(text = "Powrót do Menu", onClick = onExitClick)
         }
     }
 }
+

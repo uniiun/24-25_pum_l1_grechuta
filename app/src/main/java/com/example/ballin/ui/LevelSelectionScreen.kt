@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.ballin.model.LevelManager
+import com.example.ballin.ui.StyledButton
 
 @Composable
 fun LevelSelectionScreen(
@@ -27,14 +28,13 @@ fun LevelSelectionScreen(
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             levels.forEach { level ->
-                Button(
-                    onClick = { onLevelSelected(level.id) }, // Przekazujemy ID poziomu
+                StyledButton(
+                    text = "Level ${level.id}",
+                    onClick = { onLevelSelected(level.id) },
                     modifier = Modifier
                         .padding(vertical = 8.dp)
-                        .fillMaxWidth(0.8f)
-                ) {
-                    Text(text = "Level ${level.id}")
-                }
+                        .align(Alignment.CenterHorizontally)
+                )
             }
 
         }
