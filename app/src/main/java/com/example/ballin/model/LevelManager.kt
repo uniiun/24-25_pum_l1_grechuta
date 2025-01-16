@@ -21,6 +21,11 @@ class LevelManager(private val context: Context) {
         levels = gson.fromJson(json, type)
     }
 
+    fun getLevelById(id: Int): Level? {
+        return levels.find { it.id == id }
+    }
+
+
     fun getCurrentLevel(): Level? {
         return if (currentLevelIndex in levels.indices) levels[currentLevelIndex] else null
     }
@@ -30,6 +35,8 @@ class LevelManager(private val context: Context) {
             currentLevelIndex++
         }
     }
+
+
 
     fun resetToFirstLevel() {
         currentLevelIndex = 0

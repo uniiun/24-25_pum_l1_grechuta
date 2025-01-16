@@ -86,6 +86,12 @@ class GameActivity : ComponentActivity(), SensorEventListener {
             requestPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
 
+        val levelId = intent.getIntExtra("LEVEL_ID", -1)
+        if (levelId == -1) {
+            finish() // Błąd – brak ID poziomu
+            return
+        }
+
         // Inicjalizacja menedżera poziomów i ładowanie poziomów z JSON
         levelManager = LevelManager(this)
         levelManager.loadLevelsFromJson("levels.json")
@@ -96,9 +102,11 @@ class GameActivity : ComponentActivity(), SensorEventListener {
         cellSize = minOf(screenWidth / gridWidth, screenHeight / gridHeight)
 
         // Pobranie aktualnego poziomu i ustawienie poziomu
-        val currentLevel = levelManager.getCurrentLevel()
+        val currentLevel = levelManager.getLevelById(levelId) // Pobieramy poziom według ID
         if (currentLevel != null) {
-            setupLevel(currentLevel)
+            setupLevel(currentLevel) // Inicjalizujemy poziom
+        } else {
+            finish() // Błąd – brak poziomu o podanym ID
         }
 
         // Inicjalizacja menedżera czujników i żyroskopu

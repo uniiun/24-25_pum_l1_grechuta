@@ -6,6 +6,7 @@ data class Position(
 )
 
 data class Level(
+    val id: Int,
     val width: Int,
     val height: Int,
     val startPosition: Position,

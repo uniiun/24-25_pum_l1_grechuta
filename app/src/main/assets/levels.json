@@ -1,27 +1,29 @@
 [
   {
+    "id": 1,
     "width": 10,
     "height": 20,
     "startPosition": { "x": 2, "y": 19 },
     "goalPosition": { "x": 8, "y": 0 },
     "obstacles": [
-      { "x": 3, "y": 15, "type": "RECTANGLE" },
-      { "x": 7, "y": 7, "type": "CIRCLE" }
+      { "x": 3, "y": 15, "type": "RECTANGLE" }
     ],
     "themeColor": "#8fce00"
   },
   {
+    "id": 2,
     "width": 10,
     "height": 20,
     "startPosition": { "x": 0, "y": 19 },
     "goalPosition": { "x": 9, "y": 0 },
     "obstacles": [
-      { "x": 4, "y": 10, "type": "RECTANGLE" },
+
       { "x": 6, "y": 5, "type": "CIRCLE" }
     ],
     "themeColor": "#03A9F4"
   },
   {
+    "id": 3,
     "width": 10,
     "height": 20,
     "startPosition": { "x": 0, "y": 19 },
@@ -33,6 +35,19 @@
       { "x": 7, "y": 10, "type": "RECTANGLE" },
       { "x": 6, "y": 10, "type": "RECTANGLE" },
       { "x": 9, "y": 10, "type": "RECTANGLE" }
+    ],
+    "themeColor": "#032137"
+  },
+  {
+    "id": 4,
+    "width": 10,
+    "height": 20,
+    "startPosition": { "x": 0, "y": 19 },
+    "goalPosition": { "x": 0, "y": 0 },
+    "obstacles": [
+      { "x": 2, "y": 10, "type": "RECTANGLE" },
+      { "x": 1, "y": 18, "type": "CIRCLE" },
+      { "x": 3, "y": 17, "type": "CIRCLE" }
     ],
     "themeColor": "#032137"
   }
