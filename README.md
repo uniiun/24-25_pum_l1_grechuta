@@ -96,3 +96,14 @@
 - [ ] Optymalizuj ładowanie poziomów i przetwarzanie obrazu.
 - [ ] Przygotuj finalne layouty, ikonę aplikacji i zasoby graficzne.
 - [ ] Publikuj aplikację w Google Play Store.
+
+##TODO
+naprawić filtry kolorów poziomów
+dodać wybór koloru kulki
+zrobić padding wokół siatki mapy aby działało skalowanie dla róznych urządzeń i wyświetlało się tło
+wstawić grafiki kulek przeszkód i tła poziomu gdy kamera jest wyłączona
+dodać wibrację przy kolizji
+poprawić sterowanie i fizykę gry
+dodać bazę i zrobić high score
+optymalizacja
+
