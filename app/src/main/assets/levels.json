@@ -8,7 +8,7 @@
     "obstacles": [
       { "x": 3, "y": 15, "type": "RECTANGLE" }
     ],
-    "themeColor": "#8fce00"
+    "themeColor": -65536
   },
   {
     "id": 2,
@@ -17,10 +17,9 @@
     "startPosition": { "x": 0, "y": 19 },
     "goalPosition": { "x": 9, "y": 0 },
     "obstacles": [
-
       { "x": 6, "y": 5, "type": "CIRCLE" }
     ],
-    "themeColor": "#03A9F4"
+    "themeColor": -16711936
   },
   {
     "id": 3,
@@ -36,7 +35,7 @@
       { "x": 6, "y": 10, "type": "RECTANGLE" },
       { "x": 9, "y": 10, "type": "RECTANGLE" }
     ],
-    "themeColor": "#032137"
+    "themeColor": -16776961
   },
   {
     "id": 4,
@@ -49,6 +48,6 @@
       { "x": 1, "y": 18, "type": "CIRCLE" },
       { "x": 3, "y": 17, "type": "CIRCLE" }
     ],
-    "themeColor": "#032137"
+    "themeColor": -256
   }
 ]

@@ -1,17 +1,17 @@
 package com.example.ballin.model
 
 import android.content.Context
+import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
 class LevelManager(private val context: Context) {
     private val gson = Gson()
     private var levels: List<Level> = emptyList()
-    var currentLevelIndex: Int = 0
-        set(value) {
-            field = value
-            notifyLevelChange() // Powiadomienie o zmianie poziomu
-        }
+
+    // Zamiast indeksu przechowujemy identyfikator bieżącego poziomu
+    var currentLevelId: Int = -1
+        private set
 
     private var levelChangeListeners: MutableList<() -> Unit> = mutableListOf()
 
@@ -25,38 +25,52 @@ class LevelManager(private val context: Context) {
         return levels.find { it.id == id }
     }
 
-
-    fun getCurrentLevel(): Level? {
-        return if (currentLevelIndex in levels.indices) levels[currentLevelIndex] else null
-    }
-
-    fun nextLevel() {
-        if (currentLevelIndex < levels.size - 1) {
-            currentLevelIndex++
+    fun setCurrentLevelById(id: Int) {
+        if (levels.any { it.id == id }) {
+            currentLevelId = id
+            notifyLevelChange()
+            Log.d("LevelManager", "Ustawiono bieżący poziom na ID: $id")
+        } else {
+            Log.e("LevelManager", "Nie znaleziono poziomu z ID: $id")
         }
     }
 
+    fun getCurrentLevel(): Level? {
+        return getLevelById(currentLevelId)
+    }
 
+    fun nextLevel() {
+        // Sortuj poziomy po ID i znajdź pierwszy z ID większym niż aktualne
+        val sortedLevels = levels.sortedBy { it.id }
+        val next = sortedLevels.firstOrNull { it.id > currentLevelId }
+        if (next != null) {
+            currentLevelId = next.id
+            notifyLevelChange()
+            Log.d("LevelManager", "Przechodzę do następnego poziomu: ${next.id}")
+        } else {
+            Log.d("LevelManager", "Nie ma kolejnego poziomu.")
+        }
+    }
 
     fun resetToFirstLevel() {
-        currentLevelIndex = 0
+        val first = levels.minByOrNull { it.id }
+        if (first != null) {
+            currentLevelId = first.id
+        }
     }
 
     fun getLevels(): List<Level> {
         return levels
     }
 
-    // Dodanie słuchacza zmian poziomu
     fun addLevelChangeListener(listener: () -> Unit) {
         levelChangeListeners.add(listener)
     }
 
-    // Usunięcie słuchacza zmian poziomu
     fun removeLevelChangeListener(listener: () -> Unit) {
         levelChangeListeners.remove(listener)
     }
 
-    // Powiadamianie wszystkich słuchaczy
     private fun notifyLevelChange() {
         levelChangeListeners.forEach { it.invoke() }
     }

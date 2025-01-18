@@ -1,22 +1,31 @@
 package com.example.ballin.ui
 
-import android.content.ComponentCallbacks
+import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.camera.core.CameraSelector
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
 import com.example.ballin.model.Ball
 import com.example.ballin.model.Cell
 import com.example.ballin.model.CellType
-import androidx.compose.ui.viewinterop.AndroidView
 
 @Composable
 fun GameScreen(
@@ -26,43 +35,17 @@ fun GameScreen(
     cellSize: Float,
     onPauseClick: () -> Unit,
     useCameraBackground: Boolean,
-    themeColor: Int, // ThemeColor w formacie ARGB
-    lightLevel: Float // Dodano: aktualny poziom jasności
+    themeColor: Int,
+    lightLevel: Float
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        if (useCameraBackground) {
-            AndroidView(
-                factory = { context ->
-                    val previewView = PreviewView(context).apply {
-                        scaleType = PreviewView.ScaleType.FILL_CENTER
-                    }
-                    val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
-                    cameraProviderFuture.addListener({
-                        val cameraProvider = cameraProviderFuture.get()
-                        val preview = androidx.camera.core.Preview.Builder().build().also {
-                            it.setSurfaceProvider(previewView.surfaceProvider)
-                        }
-                        val cameraSelector = androidx.camera.core.CameraSelector.DEFAULT_BACK_CAMERA
-                        cameraProvider.unbindAll()
-                        cameraProvider.bindToLifecycle(
-                            context as ComponentActivity,
-                            cameraSelector,
-                            preview
-                        )
-                    }, androidx.core.content.ContextCompat.getMainExecutor(context))
-                    previewView
-                },
-                modifier = Modifier.fillMaxSize()
-            )
-        }
+        // Wywołanie wspólnego tła poziomu
+        LevelBackground(
+            themeColor = themeColor,
+            useCameraBackground = useCameraBackground
+        )
 
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            drawRect(
-                color = androidx.compose.ui.graphics.Color(themeColor).copy(alpha = 0.3f),
-                size = this.size
-            )
-        }
-
+        // Rysowanie siatki i obiektów gry
         Canvas(modifier = Modifier.fillMaxSize()) {
             for (row in grid.indices) {
                 for (col in grid[row].indices) {
@@ -71,37 +54,47 @@ fun GameScreen(
                     val y = row * cellSize
 
                     val color = when (cell.type) {
-                        CellType.EMPTY -> Color.Transparent
-                        CellType.OBSTACLE_RECTANGLE -> Color.Red
-                        CellType.OBSTACLE_CIRCLE -> Color.Yellow
-                        CellType.START -> Color.Green
-                        CellType.GOAL -> Color.Blue
+                        com.example.ballin.model.CellType.EMPTY -> Color.Transparent
+                        com.example.ballin.model.CellType.OBSTACLE_RECTANGLE -> Color.Red
+                        com.example.ballin.model.CellType.OBSTACLE_CIRCLE -> Color.Yellow
+                        com.example.ballin.model.CellType.START -> Color.Green
+                        com.example.ballin.model.CellType.GOAL -> Color.Blue
                         else -> Color.DarkGray
                     }
 
-                    if (cell.type == CellType.OBSTACLE_CIRCLE) {
+                    if (cell.type == com.example.ballin.model.CellType.OBSTACLE_CIRCLE) {
                         drawCircle(
                             color = color,
-                            center = androidx.compose.ui.geometry.Offset(x + cellSize / 2, y + cellSize / 2),
+                            center = Offset(x + cellSize / 2, y + cellSize / 2),
                             radius = cellSize / 2
                         )
                     } else {
                         drawRect(
                             color = color,
-                            topLeft = androidx.compose.ui.geometry.Offset(x, y),
-                            size = androidx.compose.ui.geometry.Size(cellSize, cellSize)
+                            topLeft = Offset(x, y),
+                            size = Size(cellSize, cellSize)
                         )
                     }
                 }
             }
 
+            // Rysowanie kulki
             drawCircle(
                 color = Color.Blue,
                 radius = ball.radius,
-                center = androidx.compose.ui.geometry.Offset(ball.x, ball.y)
+                center = Offset(ball.x, ball.y)
             )
         }
 
+        // Przycisk Pauza w prawym górnym rogu
+        PauseButton(
+            onClick = onPauseClick,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp)
+        )
+
+        // Wynik i jasność na górze ekranu
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -122,16 +115,11 @@ fun GameScreen(
                 style = MaterialTheme.typography.bodyMedium
             )
         }
-
-        StyledButton(
-            text = "Pauza",
-            onClick = onPauseClick,
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(16.dp)
-        )
     }
 }
+
+
+
 
 @Composable
 fun PauseScreen(
@@ -154,4 +142,52 @@ fun PauseScreen(
         }
     }
 }
+
+@Composable
+fun LevelBackground(
+    themeColor: Int,
+    useCameraBackground: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Box(modifier = modifier.fillMaxSize()) {
+        if (useCameraBackground) {
+            AndroidView(
+                factory = { context ->
+                    val previewView = PreviewView(context).apply {
+                        scaleType = PreviewView.ScaleType.FILL_CENTER
+                    }
+                    val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+                    cameraProviderFuture.addListener({
+                        val cameraProvider = cameraProviderFuture.get()
+                        val preview = androidx.camera.core.Preview.Builder().build().also {
+                            it.setSurfaceProvider(previewView.surfaceProvider)
+                        }
+                        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+                        try {
+                            cameraProvider.unbindAll()
+                            cameraProvider.bindToLifecycle(
+                                context as ComponentActivity,
+                                cameraSelector,
+                                preview
+                            )
+                        } catch (e: Exception) {
+                            Log.e("LevelBackground", "Error binding camera use cases", e)
+                        }
+                    }, ContextCompat.getMainExecutor(context))
+                    previewView
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            // Nakładka z przezroczystością
+            drawRect(
+                color = Color(themeColor).copy(alpha = 0.3f),
+                size = size
+            )
+        }
+    }
+}
+
 
