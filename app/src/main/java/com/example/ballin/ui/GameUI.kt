@@ -1,17 +1,14 @@
 package com.example.ballin.ui
 
+import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,12 +17,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import com.example.ballin.R
 import com.example.ballin.model.Ball
 import com.example.ballin.model.Cell
 import com.example.ballin.model.CellType
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.nativeCanvas
+
 
 @Composable
 fun GameScreen(
@@ -38,8 +43,10 @@ fun GameScreen(
     themeColor: Int,
     lightLevel: Float
 ) {
+    val context = LocalContext.current // Pobranie kontekstu poza Canvas
+
     Box(modifier = Modifier.fillMaxSize()) {
-        // Wywołanie wspólnego tła poziomu
+        // Tło poziomu
         LevelBackground(
             themeColor = themeColor,
             useCameraBackground = useCameraBackground
@@ -50,43 +57,57 @@ fun GameScreen(
             for (row in grid.indices) {
                 for (col in grid[row].indices) {
                     val cell = grid[row][col]
-                    val x = col * cellSize
-                    val y = row * cellSize
+                    val topLeft = Offset(col * cellSize, row * cellSize)
 
-                    val color = when (cell.type) {
-                        com.example.ballin.model.CellType.EMPTY -> Color.Transparent
-                        com.example.ballin.model.CellType.OBSTACLE_RECTANGLE -> Color.Red
-                        com.example.ballin.model.CellType.OBSTACLE_CIRCLE -> Color.Yellow
-                        com.example.ballin.model.CellType.START -> Color.Green
-                        com.example.ballin.model.CellType.GOAL -> Color.Blue
-                        else -> Color.DarkGray
-                    }
-
-                    if (cell.type == com.example.ballin.model.CellType.OBSTACLE_CIRCLE) {
-                        drawCircle(
-                            color = color,
-                            center = Offset(x + cellSize / 2, y + cellSize / 2),
-                            radius = cellSize / 2
-                        )
-                    } else {
-                        drawRect(
-                            color = color,
-                            topLeft = Offset(x, y),
-                            size = Size(cellSize, cellSize)
-                        )
+                    when (cell.type) {
+                        CellType.OBSTACLE_RECTANGLE -> {
+                            val drawable = ContextCompat.getDrawable(context, R.drawable.rock)
+                            drawable?.let {
+                                val scaledBitmap = drawableToImageBitmap(it).scaleToSize(cellSize)
+                                drawImage(scaledBitmap, topLeft)
+                            }
+                        }
+                        CellType.OBSTACLE_CIRCLE -> {
+                            val drawable = ContextCompat.getDrawable(context, R.drawable.bush)
+                            drawable?.let {
+                                val scaledBitmap = drawableToImageBitmap(it).scaleToSize(cellSize)
+                                drawImage(scaledBitmap, topLeft)
+                            }
+                        }
+                        CellType.START -> {
+                            val drawable = ContextCompat.getDrawable(context, R.drawable.start)
+                            drawable?.let {
+                                val scaledBitmap = drawableToImageBitmap(it).scaleToSize(cellSize)
+                                drawImage(scaledBitmap, topLeft)
+                            }
+                        }
+                        CellType.GOAL -> {
+                            val drawable = ContextCompat.getDrawable(context, R.drawable.goal)
+                            drawable?.let {
+                                val scaledBitmap = drawableToImageBitmap(it).scaleToSize(cellSize)
+                                drawImage(scaledBitmap, topLeft)
+                            }
+                        }
+                        else -> {}
                     }
                 }
             }
 
-            // Rysowanie kulki
-            drawCircle(
-                color = Color.Blue,
-                radius = ball.radius,
-                center = Offset(ball.x, ball.y)
-            )
+            // Rysowanie kulki gracza
+            ball.drawable?.let { drawable ->
+                drawIntoCanvas { canvas ->
+                    val bitmap = drawableToImageBitmap(drawable).scaleToSize(ball.radius * 2)
+                    canvas.nativeCanvas.drawBitmap(
+                        bitmap.asAndroidBitmap(),
+                        ball.x - ball.radius,
+                        ball.y - ball.radius,
+                        null
+                    )
+                }
+            }
         }
 
-        // Przycisk Pauza w prawym górnym rogu
+        // Przycisk Pauza
         PauseButton(
             onClick = onPauseClick,
             modifier = Modifier
@@ -101,47 +122,26 @@ fun GameScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "Wynik: $score",
-                style = MaterialTheme.typography.titleLarge
-            )
+            Text("Wynik: $score", style = MaterialTheme.typography.titleLarge)
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Jasność: ${lightLevel.toInt()} lx",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text(
-                text = "Kolor tła: #${Integer.toHexString(themeColor)}",
-                style = MaterialTheme.typography.bodyMedium
-            )
+            Text("Jasność: ${lightLevel.toInt()} lx", style = MaterialTheme.typography.bodyMedium)
+            Text("Kolor tła: #${Integer.toHexString(themeColor)}", style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
-
-
-
-
-@Composable
-fun PauseScreen(
-    onResumeClick: () -> Unit,
-    onExitClick: () -> Unit,
-    onToggleCameraClick: () -> Unit,
-    isCameraEnabled: Boolean
-) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.align(Alignment.Center),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            StyledButton(text = "Kontynuuj", onClick = onResumeClick)
-            StyledButton(
-                text = if (isCameraEnabled) "Wyłącz kamerę" else "Włącz kamerę",
-                onClick = onToggleCameraClick
-            )
-            StyledButton(text = "Powrót do Menu", onClick = onExitClick)
-        }
-    }
+// Funkcja konwertująca Drawable do ImageBitmap
+fun drawableToImageBitmap(drawable: Drawable): ImageBitmap {
+    val bitmap = Bitmap.createBitmap(
+        drawable.intrinsicWidth,
+        drawable.intrinsicHeight,
+        Bitmap.Config.ARGB_8888
+    )
+    val canvas = android.graphics.Canvas(bitmap)
+    drawable.setBounds(0, 0, canvas.width, canvas.height)
+    drawable.draw(canvas)
+    return bitmap.asImageBitmap()
 }
+
 
 @Composable
 fun LevelBackground(
@@ -190,4 +190,35 @@ fun LevelBackground(
     }
 }
 
+@Composable
+fun PauseScreen(
+    onResumeClick: () -> Unit,
+    onExitClick: () -> Unit,
+    onToggleCameraClick: () -> Unit,
+    isCameraEnabled: Boolean
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.align(Alignment.Center),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            StyledButton(text = "Kontynuuj", onClick = onResumeClick)
+            StyledButton(
+                text = if (isCameraEnabled) "Wyłącz kamerę" else "Włącz kamerę",
+                onClick = onToggleCameraClick
+            )
+            StyledButton(text = "Powrót do Menu", onClick = onExitClick)
+        }
+    }
+}
 
+fun ImageBitmap.scaleToSize(targetSize: Float): ImageBitmap {
+    val bitmap = this.asAndroidBitmap()
+    val scaledBitmap = Bitmap.createScaledBitmap(
+        bitmap,
+        targetSize.toInt(),
+        targetSize.toInt(),
+        true
+    )
+    return scaledBitmap.asImageBitmap()
+}

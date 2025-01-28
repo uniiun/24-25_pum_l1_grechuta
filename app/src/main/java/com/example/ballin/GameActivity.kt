@@ -1,6 +1,7 @@
 package com.example.ballin
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -12,6 +13,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.runtime.getValue
@@ -31,6 +33,7 @@ import com.example.ballin.ui.PauseScreen
 import com.example.ballin.ui.theme.BallinTheme
 import kotlin.math.pow
 import kotlin.math.sqrt
+import androidx.appcompat.content.res.AppCompatResources
 
 class GameActivity : ComponentActivity(), SensorEventListener {
 
@@ -48,8 +51,8 @@ class GameActivity : ComponentActivity(), SensorEventListener {
     private val gravityFactor = 0.5f
     private val dampingFactor = 0.98f
 
-    private val gridWidth = 10
-    private val gridHeight = 20
+    private val gridWidth = 6
+    private val gridHeight = 12
     private var cellSize by mutableStateOf(0f)
 
     private var themeColor by mutableStateOf(Color.Transparent.toArgb())
@@ -73,47 +76,58 @@ class GameActivity : ComponentActivity(), SensorEventListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.CAMERA
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
+        // Sprawdzenie uprawnień kamery
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
             setupCamera()
         } else {
             requestPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
 
+        // Wczytanie ID poziomu z intencji
         val levelId = intent.getIntExtra("LEVEL_ID", -1)
         if (levelId == -1) {
             finish()
             return
         }
 
-        levelManager = LevelManager(this)
-        levelManager.loadLevelsFromJson("levels.json")
+        // Inicjalizacja managera poziomów
+        levelManager = LevelManager(this).apply {
+            loadLevelsFromJson("levels.json")
+        }
 
+        // Obliczanie rozmiaru komórek na podstawie ekranu
         val screenWidth = resources.displayMetrics.widthPixels.toFloat()
         val screenHeight = resources.displayMetrics.heightPixels.toFloat()
         cellSize = minOf(screenWidth / gridWidth, screenHeight / gridHeight)
 
+        // Wczytanie poziomu i konfiguracja
         val currentLevel = levelManager.getLevelById(levelId)
         if (currentLevel != null) {
             setupLevel(currentLevel)
-            levelManager.setCurrentLevelById(currentLevel.id)  // Ustawienie bieżącego poziomu na podstawie ID
+            levelManager.setCurrentLevelById(currentLevel.id)
             updateThemeColor()
         } else {
             finish()
         }
 
+        // Inicjalizacja sensorów
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
         lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
         Log.d("GameActivity", "Light sensor available: ${lightSensor != null}")
 
+        // Odczyt wybranego koloru kulki z SharedPreferences
+        val sharedPreferences = getSharedPreferences("GamePreferences", MODE_PRIVATE)
+        val selectedBallDrawable = sharedPreferences.getInt("selected_ball_drawable", R.drawable.benson)
+        val ballDrawable = AppCompatResources.getDrawable(this, selectedBallDrawable)
+        ball.drawable = ballDrawable
+
+        // Nasłuchiwacz zmiany poziomów
         levelManager.addLevelChangeListener {
             updateThemeColor()
         }
 
+        // Ustawienie interfejsu
         setContent {
             BallinTheme {
                 if (isPaused) {
@@ -139,23 +153,27 @@ class GameActivity : ComponentActivity(), SensorEventListener {
         }
     }
 
+
     fun updateThemeColor() {
         val nextLevel = levelManager.getCurrentLevel()
-        themeColor = when(nextLevel?.id) {
-            1 -> adjustColorBrightness(0xFFFF0000.toInt(), lightLevel) // czerwony
-            2 -> adjustColorBrightness(0xFF00FF00.toInt(), lightLevel) // zielony
-            3 -> adjustColorBrightness(0xFF0000FF.toInt(), lightLevel) // niebieski
-            4 -> adjustColorBrightness(0xFFFFFF00.toInt(), lightLevel) // żółty
-            else -> Color.Transparent.toArgb()
-        }
-        Log.d("GameActivity", "Forced themeColor for level ${nextLevel?.id}: ${Integer.toHexString(themeColor)}")
+
+        // Pobierz themeColor z poziomu, jeśli istnieje
+        val baseColor = nextLevel?.themeColor ?: Color.Transparent.toArgb()
+
+        // Dostosuj jasność koloru w zależności od poziomu oświetlenia
+        themeColor = adjustColorBrightness(baseColor, lightLevel)
+
+        Log.d(
+            "GameActivity",
+            "Updated themeColor for level ${nextLevel?.id}: ${Integer.toHexString(themeColor)}"
+        )
     }
 
     private fun setupCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
         cameraProviderFuture.addListener({
             val cameraProvider = cameraProviderFuture.get()
-            val preview = androidx.camera.core.Preview.Builder().build()
+            val preview = Preview.Builder().build()
             val previewView = PreviewView(this).apply {
                 scaleType = PreviewView.ScaleType.FILL_CENTER
             }
@@ -179,12 +197,27 @@ class GameActivity : ComponentActivity(), SensorEventListener {
             }
         }
 
+        // Sprawdzenie zakresów startPosition
+        if (level.startPosition.x !in 0 until gridWidth || level.startPosition.y !in 0 until gridHeight) {
+            throw IllegalArgumentException("Start position out of bounds: ${level.startPosition}")
+        }
+
+        // Sprawdzenie zakresów goalPosition
+        if (level.goalPosition.x !in 0 until gridWidth || level.goalPosition.y !in 0 until gridHeight) {
+            throw IllegalArgumentException("Goal position out of bounds: ${level.goalPosition}")
+        }
+
         ball.x = level.startPosition.x * cellSize + cellSize / 2
         ball.y = level.startPosition.y * cellSize + cellSize / 2
-
         grid[level.goalPosition.y][level.goalPosition.x].type = CellType.GOAL
 
-        for (obstacle in level.obstacles) {
+        // Sprawdzenie zakresów przeszkód
+        level.obstacles.forEach { obstacle ->
+            if (obstacle.x !in 0 until gridWidth || obstacle.y !in 0 until gridHeight) {
+                Log.e("GameActivity", "Obstacle out of bounds: $obstacle")
+                return@forEach // Ignoruj przeszkodę poza zakresem
+            }
+
             when (obstacle.type) {
                 ObstacleType.RECTANGLE -> grid[obstacle.y][obstacle.x].type = CellType.OBSTACLE_RECTANGLE
                 ObstacleType.CIRCLE -> grid[obstacle.y][obstacle.x].type = CellType.OBSTACLE_CIRCLE

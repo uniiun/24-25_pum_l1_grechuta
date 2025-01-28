@@ -1,52 +1,52 @@
 [
   {
     "id": 1,
-    "width": 10,
-    "height": 20,
-    "startPosition": { "x": 2, "y": 19 },
-    "goalPosition": { "x": 8, "y": 0 },
+    "width": 6,
+    "height": 12,
+    "startPosition": { "x": 2, "y": 8 },
+    "goalPosition": { "x": 5, "y": 0 },
     "obstacles": [
-      { "x": 3, "y": 15, "type": "RECTANGLE" }
+      { "x": 3, "y": 11, "type": "RECTANGLE" }
     ],
     "themeColor": -65536
   },
   {
     "id": 2,
-    "width": 10,
-    "height": 20,
-    "startPosition": { "x": 0, "y": 19 },
-    "goalPosition": { "x": 9, "y": 0 },
+    "width": 6,
+    "height": 12,
+    "startPosition": { "x": 0, "y": 9 },
+    "goalPosition": { "x": 5, "y": 0 },
     "obstacles": [
-      { "x": 6, "y": 5, "type": "CIRCLE" }
+      { "x": 5, "y": 5, "type": "CIRCLE" }
     ],
     "themeColor": -16711936
   },
   {
     "id": 3,
-    "width": 10,
-    "height": 20,
-    "startPosition": { "x": 0, "y": 19 },
+    "width": 6,
+    "height": 12,
+    "startPosition": { "x": 0, "y": 8 },
     "goalPosition": { "x": 0, "y": 0 },
     "obstacles": [
       { "x": 2, "y": 10, "type": "RECTANGLE" },
-      { "x": 1, "y": 18, "type": "CIRCLE" },
-      { "x": 3, "y": 17, "type": "CIRCLE" },
-      { "x": 7, "y": 10, "type": "RECTANGLE" },
-      { "x": 6, "y": 10, "type": "RECTANGLE" },
-      { "x": 9, "y": 10, "type": "RECTANGLE" }
+      { "x": 1, "y": 10, "type": "CIRCLE" },
+      { "x": 3, "y": 10, "type": "CIRCLE" },
+      { "x": 5, "y": 8, "type": "RECTANGLE" },
+      { "x": 3, "y": 10, "type": "RECTANGLE" },
+      { "x": 2, "y": 10, "type": "RECTANGLE" }
     ],
     "themeColor": -16776961
   },
   {
     "id": 4,
-    "width": 10,
-    "height": 20,
-    "startPosition": { "x": 0, "y": 19 },
+    "width": 6,
+    "height": 12,
+    "startPosition": { "x": 0, "y": 8 },
     "goalPosition": { "x": 0, "y": 0 },
     "obstacles": [
       { "x": 2, "y": 10, "type": "RECTANGLE" },
-      { "x": 1, "y": 18, "type": "CIRCLE" },
-      { "x": 3, "y": 17, "type": "CIRCLE" }
+      { "x": 1, "y": 8, "type": "CIRCLE" },
+      { "x": 4, "y": 6, "type": "CIRCLE" }
     ],
     "themeColor": -256
   }

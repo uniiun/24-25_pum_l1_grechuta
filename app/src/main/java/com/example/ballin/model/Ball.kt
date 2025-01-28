@@ -1,11 +1,14 @@
 package com.example.ballin.model
 
+import android.graphics.drawable.Drawable
+
 data class Ball(
     var x: Float,
     var y: Float,
     var dx: Float,
     var dy: Float,
-    val radius: Float
+    var radius: Float,
+    var drawable: Drawable? = null // Właściwość przechowująca grafikę
 ) {
     fun updatePosition(gridWidth: Int, gridHeight: Int, cellSize: Float, dampingFactor: Float) {
         // Aktualizacja pozycji kulki

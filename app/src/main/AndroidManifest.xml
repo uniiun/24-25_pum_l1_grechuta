@@ -37,8 +37,15 @@
             android:exported="true"
             android:theme="@style/Theme.Ballin.Game">
         </activity>
-        <activity android:name=".LevelSelectActivity" />
-    </application>
-    <uses-permission android:name="android.permission.BODY_SENSORS" />
 
+        <!-- LevelSelectActivity -->
+        <activity android:name=".LevelSelectActivity" />
+
+        <!-- ColorPickerActivity - Nowa aktywność wyboru koloru -->
+        <activity android:name=".ui.ColorPickerActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Ballin" />
+    </application>
+
+    <uses-permission android:name="android.permission.BODY_SENSORS" />
 </manifest>
