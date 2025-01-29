@@ -195,7 +195,7 @@ fun PauseScreen(
     onResumeClick: () -> Unit,
     onExitClick: () -> Unit,
     onToggleCameraClick: () -> Unit,
-    isCameraEnabled: Boolean
+    isCameraEnabled: Boolean,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Column(

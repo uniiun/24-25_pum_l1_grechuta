@@ -1,7 +1,6 @@
 package com.example.ballin
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -12,6 +11,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -25,20 +25,20 @@ import androidx.core.content.ContextCompat
 import com.example.ballin.model.Ball
 import com.example.ballin.model.Cell
 import com.example.ballin.model.CellType
+import com.example.ballin.model.CollisionHandler
 import com.example.ballin.model.Level
 import com.example.ballin.model.LevelManager
 import com.example.ballin.model.ObstacleType
 import com.example.ballin.ui.GameScreen
 import com.example.ballin.ui.PauseScreen
 import com.example.ballin.ui.theme.BallinTheme
-import kotlin.math.pow
-import kotlin.math.sqrt
-import androidx.appcompat.content.res.AppCompatResources
 
 class GameActivity : ComponentActivity(), SensorEventListener {
 
     private lateinit var levelManager: LevelManager
     private lateinit var sensorManager: SensorManager
+    private lateinit var collisionHandler: CollisionHandler
+
     private var gyroscopeSensor: Sensor? = null
 
     private var ball by mutableStateOf(Ball(x = 0f, y = 0f, dx = 0f, dy = 0f, radius = 50f))
@@ -60,6 +60,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
     private var lightSensor: Sensor? = null
     private var lightLevel by mutableStateOf(0f)
 
+
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (isGranted) {
@@ -68,6 +69,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
                 Log.e("GameActivity", "Kamera nie została przyznana")
             }
         }
+
 
     private val grid: Array<Array<Cell>> = Array(gridHeight) {
         Array(gridWidth) { Cell() }
@@ -111,10 +113,14 @@ class GameActivity : ComponentActivity(), SensorEventListener {
         }
 
         // Inicjalizacja sensorów
-        sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
+                sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
         lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
-        Log.d("GameActivity", "Light sensor available: ${lightSensor != null}")
+
+
+
+        collisionHandler = CollisionHandler(this, ball, grid, cellSize)
+
 
         // Odczyt wybranego koloru kulki z SharedPreferences
         val sharedPreferences = getSharedPreferences("GamePreferences", MODE_PRIVATE)
@@ -152,7 +158,6 @@ class GameActivity : ComponentActivity(), SensorEventListener {
             }
         }
     }
-
 
     fun updateThemeColor() {
         val nextLevel = levelManager.getCurrentLevel()
@@ -262,7 +267,8 @@ class GameActivity : ComponentActivity(), SensorEventListener {
                 dampingFactor = dampingFactor
             )
 
-            checkCollision()
+            collisionHandler.checkCollision { onLevelComplete() }
+
             score = calculateScore(ball.x, ball.y)
         } else if (event?.sensor?.type == Sensor.TYPE_LIGHT) {
             lightLevel = event.values[0]
@@ -293,42 +299,6 @@ class GameActivity : ComponentActivity(), SensorEventListener {
         return adjustedColor
     }
 
-    private fun checkCollision() {
-        for (row in grid.indices) {
-            for (col in grid[row].indices) {
-                val cell = grid[row][col]
-                val x = col * cellSize
-                val y = row * cellSize
-
-                when (cell.type) {
-                    CellType.GOAL -> {
-                        if (ball.x + ball.radius > x && ball.x - ball.radius < x + cellSize &&
-                            ball.y + ball.radius > y && ball.y - ball.radius < y + cellSize) {
-                            onLevelComplete()
-                        }
-                    }
-                    CellType.OBSTACLE_RECTANGLE -> {
-                        if (ball.x + ball.radius > x && ball.x - ball.radius < x + cellSize &&
-                            ball.y + ball.radius > y && ball.y - ball.radius < y + cellSize) {
-                            handleRectangleCollision(x, y)
-                        }
-                    }
-                    CellType.OBSTACLE_CIRCLE -> {
-                        val circleCenterX = x + cellSize / 2
-                        val circleCenterY = y + cellSize / 2
-                        val distance = sqrt(
-                            (ball.x - circleCenterX).pow(2) + (ball.y - circleCenterY).pow(2)
-                        )
-                        if (distance < ball.radius + cellSize / 2) {
-                            handleCircleCollision(circleCenterX, circleCenterY)
-                        }
-                    }
-                    else -> {}
-                }
-            }
-        }
-    }
-
     private fun onLevelComplete() {
         levelManager.nextLevel()
         val nextLevel = levelManager.getCurrentLevel()
@@ -337,36 +307,8 @@ class GameActivity : ComponentActivity(), SensorEventListener {
             updateThemeColor() // Ustawienie koloru motywu po załadowaniu nowego poziomu
         } else {
             finish()
-            // Tutaj możesz wyświetlić komunikat o ukończeniu gry
-        }
-    }
 
-    private fun handleRectangleCollision(rectX: Float, rectY: Float) {
-        if (ball.x < rectX || ball.x > rectX + cellSize) {
-            ball.dx = -ball.dx
         }
-        if (ball.y < rectY || ball.y > rectY + cellSize) {
-            ball.dy = -ball.dy
-        }
-        ball.dx *= dampingFactor
-        ball.dy *= dampingFactor
-    }
-
-    private fun handleCircleCollision(circleX: Float, circleY: Float) {
-        val dx = ball.x - circleX
-        val dy = ball.y - circleY
-        val distance = sqrt(dx.pow(2) + dy.pow(2))
-
-        if (distance != 0.0f) {
-            val nx = dx / distance
-            val ny = dy / distance
-            val dotProduct = ball.dx * nx + ball.dy * ny
-
-            ball.dx -= 2 * dotProduct * nx
-            ball.dy -= 2 * dotProduct * ny
-        }
-        ball.dx *= dampingFactor
-        ball.dy *= dampingFactor
     }
 
     private fun pauseGame() {
