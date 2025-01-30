@@ -1,6 +1,7 @@
 package com.example.ballin
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -44,7 +45,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
     private var ball by mutableStateOf(Ball(x = 0f, y = 0f, dx = 0f, dy = 0f, radius = 50f))
     private var rotationX by mutableStateOf(0f)
     private var rotationY by mutableStateOf(0f)
-    private var score by mutableStateOf(0)
+    private var score by mutableStateOf(0L)
     private var isPaused by mutableStateOf(false)
     private var useCameraBackground by mutableStateOf(false)
 
@@ -60,6 +61,8 @@ class GameActivity : ComponentActivity(), SensorEventListener {
     private var lightSensor: Sensor? = null
     private var lightLevel by mutableStateOf(0f)
 
+    private var levelStartTime: Long = 0L
+    private var accumulatedTime: Long = 0L
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
@@ -139,7 +142,12 @@ class GameActivity : ComponentActivity(), SensorEventListener {
                 if (isPaused) {
                     PauseScreen(
                         onResumeClick = { resumeGame() },
-                        onExitClick = { finish() },
+                        onExitClick = {
+
+                            val intent = Intent(this@GameActivity, MainActivity::class.java)
+                            startActivity(intent)
+                            finish()
+                        },
                         onToggleCameraClick = { useCameraBackground = !useCameraBackground },
                         isCameraEnabled = useCameraBackground
                     )
@@ -230,6 +238,8 @@ class GameActivity : ComponentActivity(), SensorEventListener {
         }
 
         grid[level.startPosition.y][level.startPosition.x].type = CellType.START
+        accumulatedTime = 0L
+        levelStartTime = System.currentTimeMillis()
     }
 
     override fun onResume() {
@@ -269,7 +279,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
 
             collisionHandler.checkCollision { onLevelComplete() }
 
-            score = calculateScore(ball.x, ball.y)
+            score = calculateScore()
         } else if (event?.sensor?.type == Sensor.TYPE_LIGHT) {
             lightLevel = event.values[0]
             Log.d("GameActivity", "Light sensor changed: $lightLevel lx")
@@ -300,20 +310,29 @@ class GameActivity : ComponentActivity(), SensorEventListener {
     }
 
     private fun onLevelComplete() {
+        val currentTimeSpent = calculateScore()
+        val currentLevelId = levelManager.getCurrentLevel()?.id
+        if (currentLevelId != null) {
+            updateBestTimeForLevel(currentLevelId, currentTimeSpent)
+        }
+
         levelManager.nextLevel()
         val nextLevel = levelManager.getCurrentLevel()
         if (nextLevel != null) {
             setupLevel(nextLevel)
-            updateThemeColor() // Ustawienie koloru motywu po załadowaniu nowego poziomu
+            updateThemeColor()
         } else {
             finish()
-
         }
     }
 
     private fun pauseGame() {
         isPaused = true
         sensorManager.unregisterListener(this)
+        if (levelStartTime > 0) {
+            accumulatedTime += System.currentTimeMillis() - levelStartTime
+        }
+        levelStartTime = 0L
     }
 
     private fun resumeGame() {
@@ -324,6 +343,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
         lightSensor?.let {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
         }
+        levelStartTime = System.currentTimeMillis()
     }
 
     private fun calculateThemeColor(lightLevel: Float): Int {
@@ -336,7 +356,21 @@ class GameActivity : ComponentActivity(), SensorEventListener {
         }
     }
 
-    private fun calculateScore(x: Float, y: Float): Int {
-        return ((x + y) / 10).toInt()
+    private fun calculateScore(): Long {
+        val currentRunningTime = if (levelStartTime > 0) {
+            System.currentTimeMillis() - levelStartTime
+        } else {
+            0L
+        }
+        return accumulatedTime + currentRunningTime
+    }
+    private fun updateBestTimeForLevel(levelId: Int, currentTime: Long) {
+        val sharedPreferences = getSharedPreferences("GamePreferences", MODE_PRIVATE)
+        val key = "best_time_level_$levelId"
+        val oldBestTime = sharedPreferences.getLong(key, Long.MAX_VALUE)
+        if (currentTime < oldBestTime) {
+            sharedPreferences.edit().putLong(key, currentTime).apply()
+            Log.d("GameActivity", "Nowy rekord dla poziomu $levelId: $currentTime ms")
+        }
     }
 }

@@ -15,8 +15,9 @@ class LevelSelectActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        levelManager = LevelManager(this)
-        levelManager.loadLevelsFromJson("levels.json")
+        levelManager = LevelManager(this).apply {
+            loadLevelsFromJson("levels.json")
+        }
 
         setContent {
             BallinTheme {
@@ -24,7 +25,7 @@ class LevelSelectActivity : ComponentActivity() {
                     levelManager = levelManager,
                     onLevelSelected = { levelId ->
                         val intent = Intent(this, GameActivity::class.java).apply {
-                            putExtra("LEVEL_ID", levelId) // Wysyłamy ID poziomu
+                            putExtra("LEVEL_ID", levelId)
                         }
                         startActivity(intent)
                     }

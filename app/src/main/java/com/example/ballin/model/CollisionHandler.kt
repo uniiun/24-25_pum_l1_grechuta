@@ -1,7 +1,6 @@
 package com.example.ballin.model
 
 import android.content.Context
-import android.os.Build
 import android.util.Log
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -15,8 +14,6 @@ class CollisionHandler(
     private val dampingFactor = 0.98f
 
     fun checkCollision(onLevelComplete: () -> Unit) {
-        checkWallCollision()
-
         for (row in grid.indices) {
             for (col in grid[row].indices) {
                 val cell = grid[row][col]
@@ -24,26 +21,30 @@ class CollisionHandler(
                 val y = row * cellSize
 
                 when (cell.type) {
-                    CellType.GOAL -> if (ballCollidesWith(x, y)) onLevelComplete()
+                    CellType.GOAL -> if (ballCollidesWith(x, y)) {
+                        onLevelComplete()
+                    }
+
                     CellType.OBSTACLE_RECTANGLE -> if (ballCollidesWith(x, y)) {
                         handleRectangleCollision(x, y)
                     }
+
                     CellType.OBSTACLE_CIRCLE -> {
                         val circleCenterX = x + cellSize / 2
                         val circleCenterY = y + cellSize / 2
                         if (ballCollidesWithCircle(circleCenterX, circleCenterY)) {
                             handleCircleCollision(circleCenterX, circleCenterY)
-
                         }
                     }
-                    CellType.START, CellType.EMPTY -> {}
+
+                    CellType.EMPTY, CellType.START -> {}
                     else -> Log.w("CollisionHandler", "Nieobsługiwany typ komórki: ${cell.type}")
                 }
             }
         }
     }
 
-    private fun checkWallCollision() {
+    private fun checkWallCollision(): Boolean {
         val mapWidth = grid[0].size * cellSize
         val mapHeight = grid.size * cellSize
         val offset = ball.radius * 1.1f
@@ -79,13 +80,17 @@ class CollisionHandler(
         }
 
         if (wallCollision) {
-
+            // Zwracamy informację, że faktycznie było zderzenie ze ścianą
+            return true
         }
+        return false
     }
 
     private fun ballCollidesWith(x: Float, y: Float): Boolean {
-        return ball.x + ball.radius > x && ball.x - ball.radius < x + cellSize &&
-                ball.y + ball.radius > y && ball.y - ball.radius < y + cellSize
+        return ball.x + ball.radius > x &&
+                ball.x - ball.radius < x + cellSize &&
+                ball.y + ball.radius > y &&
+                ball.y - ball.radius < y + cellSize
     }
 
     private fun ballCollidesWithCircle(cx: Float, cy: Float): Boolean {
@@ -95,6 +100,7 @@ class CollisionHandler(
     }
 
     private fun handleRectangleCollision(rectX: Float, rectY: Float) {
+        // Odbicie poziome/pionowe w zależności od pozycji kulki
         if (ball.x < rectX || ball.x > rectX + cellSize) {
             ball.dx = -ball.dx
         }

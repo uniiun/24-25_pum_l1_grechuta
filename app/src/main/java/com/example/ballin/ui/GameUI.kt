@@ -15,7 +15,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -35,7 +34,7 @@ import androidx.compose.ui.graphics.nativeCanvas
 @Composable
 fun GameScreen(
     ball: Ball,
-    score: Int,
+    score: Long,
     grid: Array<Array<Cell>>,
     cellSize: Float,
     onPauseClick: () -> Unit,
@@ -43,15 +42,13 @@ fun GameScreen(
     themeColor: Int,
     lightLevel: Float
 ) {
-    val context = LocalContext.current // Pobranie kontekstu poza Canvas
+    val context = LocalContext.current
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Tło poziomu
         LevelBackground(
             themeColor = themeColor,
             useCameraBackground = useCameraBackground
         )
-
         // Rysowanie siatki i obiektów gry
         Canvas(modifier = Modifier.fillMaxSize()) {
             for (row in grid.indices) {
@@ -93,7 +90,6 @@ fun GameScreen(
                 }
             }
 
-            // Rysowanie kulki gracza
             ball.drawable?.let { drawable ->
                 drawIntoCanvas { canvas ->
                     val bitmap = drawableToImageBitmap(drawable).scaleToSize(ball.radius * 2)
@@ -106,8 +102,6 @@ fun GameScreen(
                 }
             }
         }
-
-        // Przycisk Pauza
         PauseButton(
             onClick = onPauseClick,
             modifier = Modifier
@@ -115,21 +109,27 @@ fun GameScreen(
                 .padding(16.dp)
         )
 
-        // Wynik i jasność na górze ekranu
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Wynik: $score", style = MaterialTheme.typography.titleLarge)
+            val formattedScore = formatTimeMsToMMSS(score)
+            Text("Wynik: $formattedScore", style = MaterialTheme.typography.titleLarge)
             Spacer(modifier = Modifier.height(8.dp))
             Text("Jasność: ${lightLevel.toInt()} lx", style = MaterialTheme.typography.bodyMedium)
             Text("Kolor tła: #${Integer.toHexString(themeColor)}", style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
-// Funkcja konwertująca Drawable do ImageBitmap
+
+fun formatTimeMsToMMSS(timeMs: Long): String {
+    val totalSeconds = timeMs / 1000
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return String.format("%02d:%02d", minutes, seconds)
+}
 fun drawableToImageBitmap(drawable: Drawable): ImageBitmap {
     val bitmap = Bitmap.createBitmap(
         drawable.intrinsicWidth,
@@ -141,7 +141,6 @@ fun drawableToImageBitmap(drawable: Drawable): ImageBitmap {
     drawable.draw(canvas)
     return bitmap.asImageBitmap()
 }
-
 
 @Composable
 fun LevelBackground(
@@ -181,7 +180,6 @@ fun LevelBackground(
         }
 
         Canvas(modifier = Modifier.fillMaxSize()) {
-            // Nakładka z przezroczystością
             drawRect(
                 color = Color(themeColor).copy(alpha = 0.3f),
                 size = size
