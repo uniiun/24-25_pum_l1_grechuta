@@ -9,7 +9,6 @@ class LevelManager(private val context: Context) {
     private val gson = Gson()
     private var levels: List<Level> = emptyList()
 
-    // Zamiast indeksu przechowujemy identyfikator bieżącego poziomu
     var currentLevelId: Int = -1
         private set
 
@@ -40,7 +39,6 @@ class LevelManager(private val context: Context) {
     }
 
     fun nextLevel() {
-        // Sortuj poziomy po ID i znajdź pierwszy z ID większym niż aktualne
         val sortedLevels = levels.sortedBy { it.id }
         val next = sortedLevels.firstOrNull { it.id > currentLevelId }
         if (next != null) {

@@ -8,6 +8,8 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Bundle
+import android.os.Handler
+import android.os.HandlerThread
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -36,6 +38,11 @@ import com.example.ballin.ui.theme.BallinTheme
 
 class GameActivity : ComponentActivity(), SensorEventListener {
 
+    private val gameThread = HandlerThread("GameThread").apply { start() }
+    private val gameHandler = Handler(gameThread.looper)
+    private val frameInterval = 16L // 60 FPS (~16 ms)
+    private var isRunning = true
+
     private lateinit var levelManager: LevelManager
     private lateinit var sensorManager: SensorManager
     private lateinit var collisionHandler: CollisionHandler
@@ -43,8 +50,11 @@ class GameActivity : ComponentActivity(), SensorEventListener {
     private var gyroscopeSensor: Sensor? = null
 
     private var ball by mutableStateOf(Ball(x = 0f, y = 0f, dx = 0f, dy = 0f, radius = 50f))
-    private var rotationX by mutableStateOf(0f)
-    private var rotationY by mutableStateOf(0f)
+    @Volatile private var rotationX = 0f
+    @Volatile private var rotationY = 0f
+    private val tempPosition = FloatArray(2)
+    private val tempVelocity = FloatArray(2)
+
     private var score by mutableStateOf(0L)
     private var isPaused by mutableStateOf(false)
     private var useCameraBackground by mutableStateOf(false)
@@ -122,7 +132,8 @@ class GameActivity : ComponentActivity(), SensorEventListener {
 
 
 
-        collisionHandler = CollisionHandler(this, ball, grid, cellSize)
+        collisionHandler = CollisionHandler(ball, grid, cellSize)
+        startGameLoop()
 
 
         // Odczyt wybranego koloru kulki z SharedPreferences
@@ -261,26 +272,12 @@ class GameActivity : ComponentActivity(), SensorEventListener {
 
     override fun onSensorChanged(event: SensorEvent?) {
         if (!isPaused && event?.sensor?.type == Sensor.TYPE_GYROSCOPE) {
-            rotationX = event.values[1]
-            rotationY = event.values[0]
-
-            ball.dx += rotationX * gravityFactor
-            ball.dy += rotationY * gravityFactor
-
-            ball.dx *= dampingFactor
-            ball.dy *= dampingFactor
-
-            ball.updatePosition(
-                gridWidth = gridWidth,
-                gridHeight = gridHeight,
-                cellSize = cellSize,
-                dampingFactor = dampingFactor
-            )
-
-            collisionHandler.checkCollision { onLevelComplete() }
-
-            score = calculateScore()
-        } else if (event?.sensor?.type == Sensor.TYPE_LIGHT) {
+            synchronized(this) {
+                rotationX = event.values[1]
+                rotationY = event.values[0]
+            }
+        }
+        else if (event?.sensor?.type == Sensor.TYPE_LIGHT) {
             lightLevel = event.values[0]
             Log.d("GameActivity", "Light sensor changed: $lightLevel lx")
             val currentLevelColor = levelManager.getCurrentLevel()?.themeColor ?: Color.White.toArgb()
@@ -326,6 +323,40 @@ class GameActivity : ComponentActivity(), SensorEventListener {
         }
     }
 
+    private fun startGameLoop() {
+        gameHandler.post(object : Runnable {
+            override fun run() {
+                if (isRunning) {
+                    updateGame()
+                    gameHandler.postDelayed(this, frameInterval)
+                }
+            }
+        })
+    }
+    private fun updateGame() {
+        if (isPaused) return
+
+        val (rotX, rotY) = synchronized(this) {
+            val tmp = rotationX to rotationY
+            rotationX = 0f
+            rotationY = 0f
+            tmp
+        }
+
+        ball.dx = (ball.dx + rotX * gravityFactor) * dampingFactor
+        ball.dy = (ball.dy + rotY * gravityFactor) * dampingFactor
+        ball.updatePosition(gridWidth, gridHeight, cellSize)
+
+        collisionHandler.checkCollision {
+            runOnUiThread { onLevelComplete() }
+        }
+
+        runOnUiThread {
+            score = calculateScore()
+        }
+    }
+
+
     private fun pauseGame() {
         isPaused = true
         sensorManager.unregisterListener(this)
@@ -341,7 +372,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME)
         }
         lightSensor?.let {
-            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
+            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
         }
         levelStartTime = System.currentTimeMillis()
     }
