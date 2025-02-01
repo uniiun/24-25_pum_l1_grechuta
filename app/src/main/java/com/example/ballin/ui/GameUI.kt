@@ -12,13 +12,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -27,10 +30,56 @@ import com.example.ballin.R
 import com.example.ballin.model.Ball
 import com.example.ballin.model.Cell
 import com.example.ballin.model.CellType
-import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.graphics.nativeCanvas
 
+/**
+ * Cache'owanie bitmap – funkcja wykorzystuje remember, by przeskalować
+ * i przechować bitmapy przeszkód oraz kulki. Parametry:
+ * - cellSize: rozmiar komórki (dla przeszkód, start, cel),
+ * - ballDiameter: średnica kulki (2 * radius),
+ * W mapie kluczem jest resource ID.
+ */
+@Composable
+fun rememberScaledBitmaps(cellSize: Float, ballDiameter: Float): Map<Int, ImageBitmap> {
+    val context = LocalContext.current
+    return remember(cellSize, ballDiameter) {
+        mapOf(
+            // Przeszkody oraz elementy planszy:
+            R.drawable.rock to drawableToImageBitmap(
+                ContextCompat.getDrawable(context, R.drawable.rock)!!
+            ).scaleToSize(cellSize),
+            R.drawable.bush to drawableToImageBitmap(
+                ContextCompat.getDrawable(context, R.drawable.bush)!!
+            ).scaleToSize(cellSize),
+            R.drawable.start to drawableToImageBitmap(
+                ContextCompat.getDrawable(context, R.drawable.start)!!
+            ).scaleToSize(cellSize),
+            R.drawable.goal to drawableToImageBitmap(
+                ContextCompat.getDrawable(context, R.drawable.goal)!!
+            ).scaleToSize(cellSize),
+            // Kulki – użytkownik wybiera kolor spośród dostępnych:
+            R.drawable.benson to drawableToImageBitmap(
+                ContextCompat.getDrawable(context, R.drawable.benson)!!
+            ).scaleToSize(ballDiameter),
+            R.drawable.bluson to drawableToImageBitmap(
+                ContextCompat.getDrawable(context, R.drawable.bluson)!!
+            ).scaleToSize(ballDiameter),
+            R.drawable.greenson to drawableToImageBitmap(
+                ContextCompat.getDrawable(context, R.drawable.greenson)!!
+            ).scaleToSize(ballDiameter),
+            R.drawable.roson to drawableToImageBitmap(
+                ContextCompat.getDrawable(context, R.drawable.roson)!!
+            ).scaleToSize(ballDiameter),
+            R.drawable.yellson to drawableToImageBitmap(
+                ContextCompat.getDrawable(context, R.drawable.yellson)!!
+            ).scaleToSize(ballDiameter)
+        )
+    }
+}
 
+/**
+ * Główny ekran gry.
+ * Parametr selectedBallResource – resource ID kulki wybranej przez użytkownika.
+ */
 @Composable
 fun GameScreen(
     ball: Ball,
@@ -40,61 +89,59 @@ fun GameScreen(
     onPauseClick: () -> Unit,
     useCameraBackground: Boolean,
     themeColor: Int,
-    lightLevel: Float
+    lightLevel: Float,
+    selectedBallResource: Int
 ) {
     val context = LocalContext.current
+
+    // Obliczamy średnicę kulki (2 * radius)
+    val ballDiameter = ball.radius * 2
+    // Cache'ujemy bitmapy przeszkód oraz kulki – używamy wspólnego cache'a
+    val scaledBitmaps = rememberScaledBitmaps(cellSize, ballDiameter)
 
     Box(modifier = Modifier.fillMaxSize()) {
         LevelBackground(
             themeColor = themeColor,
             useCameraBackground = useCameraBackground
         )
-        // Rysowanie siatki i obiektów gry
+        // Rysowanie planszy – używamy wcześniej zcache'owanych bitmap
         Canvas(modifier = Modifier.fillMaxSize()) {
+            // Iteracja po komórkach planszy
             for (row in grid.indices) {
                 for (col in grid[row].indices) {
                     val cell = grid[row][col]
                     val topLeft = Offset(col * cellSize, row * cellSize)
-
                     when (cell.type) {
                         CellType.OBSTACLE_RECTANGLE -> {
-                            val drawable = ContextCompat.getDrawable(context, R.drawable.rock)
-                            drawable?.let {
-                                val scaledBitmap = drawableToImageBitmap(it).scaleToSize(cellSize)
-                                drawImage(scaledBitmap, topLeft)
+                            scaledBitmaps[R.drawable.rock]?.let { bitmap ->
+                                drawImage(bitmap, topLeft)
                             }
                         }
                         CellType.OBSTACLE_CIRCLE -> {
-                            val drawable = ContextCompat.getDrawable(context, R.drawable.bush)
-                            drawable?.let {
-                                val scaledBitmap = drawableToImageBitmap(it).scaleToSize(cellSize)
-                                drawImage(scaledBitmap, topLeft)
+                            scaledBitmaps[R.drawable.bush]?.let { bitmap ->
+                                drawImage(bitmap, topLeft)
                             }
                         }
                         CellType.START -> {
-                            val drawable = ContextCompat.getDrawable(context, R.drawable.start)
-                            drawable?.let {
-                                val scaledBitmap = drawableToImageBitmap(it).scaleToSize(cellSize)
-                                drawImage(scaledBitmap, topLeft)
+                            scaledBitmaps[R.drawable.start]?.let { bitmap ->
+                                drawImage(bitmap, topLeft)
                             }
                         }
                         CellType.GOAL -> {
-                            val drawable = ContextCompat.getDrawable(context, R.drawable.goal)
-                            drawable?.let {
-                                val scaledBitmap = drawableToImageBitmap(it).scaleToSize(cellSize)
-                                drawImage(scaledBitmap, topLeft)
+                            scaledBitmaps[R.drawable.goal]?.let { bitmap ->
+                                drawImage(bitmap, topLeft)
                             }
                         }
-                        else -> {}
+                        else -> { /* Nic nie rysujemy */ }
                     }
                 }
             }
 
-            ball.drawable?.let { drawable ->
+            // Rysowanie kulki – wybieramy bitmapę na podstawie resource ID
+            scaledBitmaps[selectedBallResource]?.let { ballBitmap ->
                 drawIntoCanvas { canvas ->
-                    val bitmap = drawableToImageBitmap(drawable).scaleToSize(ball.radius * 2)
                     canvas.nativeCanvas.drawBitmap(
-                        bitmap.asAndroidBitmap(),
+                        ballBitmap.asAndroidBitmap(),
                         ball.x - ball.radius,
                         ball.y - ball.radius,
                         null
@@ -108,7 +155,6 @@ fun GameScreen(
                 .align(Alignment.TopEnd)
                 .padding(16.dp)
         )
-
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -130,6 +176,7 @@ fun formatTimeMsToMMSS(timeMs: Long): String {
     val seconds = totalSeconds % 60
     return String.format("%02d:%02d", minutes, seconds)
 }
+
 fun drawableToImageBitmap(drawable: Drawable): ImageBitmap {
     val bitmap = Bitmap.createBitmap(
         drawable.intrinsicWidth,
@@ -178,7 +225,6 @@ fun LevelBackground(
                 modifier = Modifier.fillMaxSize()
             )
         }
-
         Canvas(modifier = Modifier.fillMaxSize()) {
             drawRect(
                 color = Color(themeColor).copy(alpha = 0.3f),
@@ -209,6 +255,7 @@ fun PauseScreen(
         }
     }
 }
+
 
 fun ImageBitmap.scaleToSize(targetSize: Float): ImageBitmap {
     val bitmap = this.asAndroidBitmap()

@@ -171,7 +171,8 @@ class GameActivity : ComponentActivity(), SensorEventListener {
                         onPauseClick = { pauseGame() },
                         useCameraBackground = useCameraBackground,
                         themeColor = themeColor,
-                        lightLevel = lightLevel
+                        lightLevel = lightLevel,
+                        selectedBallResource = selectedBallDrawable
                     )
                 }
             }

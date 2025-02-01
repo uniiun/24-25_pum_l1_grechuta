@@ -5,8 +5,8 @@ enum class CellType {
     START,
     GOAL,
     OBSTACLE,
-    OBSTACLE_RECTANGLE, // Nowy typ - prostokątna przeszkoda
-    OBSTACLE_CIRCLE // Nowy typ - okrągła przeszkoda
+    OBSTACLE_RECTANGLE,
+    OBSTACLE_CIRCLE
 }
 
 data class Cell(

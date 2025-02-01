@@ -2,7 +2,6 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("kotlin-kapt") // Wymagane dla Room
 }
 
 android {
@@ -60,29 +59,24 @@ dependencies {
     implementation(libs.androidx.material3)
 
     // CameraX
-    implementation("androidx.camera:camera-core:1.4.0")
-    implementation("androidx.camera:camera-camera2:1.4.0")
-    implementation("androidx.camera:camera-lifecycle:1.4.0")
-    implementation("androidx.camera:camera-view:1.4.0")
-    implementation("androidx.camera:camera-extensions:1.4.0")
-
-    // Room (SQLite ORM)
-    implementation("androidx.room:room-runtime:2.5.1")
-    kapt("androidx.room:room-compiler:2.5.1")
-    implementation("androidx.room:room-ktx:2.5.1")
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
+    implementation(libs.androidx.camera.extensions)
 
     // Lifecycle (ViewModel i LiveData)
-    implementation ("androidx.compose.ui:ui:1.5.1")
-    implementation ("androidx.compose.ui:ui-tooling:1.5.1")
-    implementation ("androidx.compose.foundation:foundation:1.5.1")
-    implementation ("androidx.activity:activity-compose:1.7.2")
-    implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+    implementation (libs.ui)
+    implementation (libs.ui.tooling)
+    implementation (libs.androidx.foundation)
+    implementation (libs.androidx.activity.compose)
+    implementation (libs.androidx.lifecycle.runtime.ktx)
 
     // Material Design
-    implementation("com.google.android.material:material:1.9.0")
-    implementation("androidx.compose.material:material-icons-extended:1.5.1")
+    implementation(libs.material)
+    implementation(libs.androidx.material.icons.extended)
 
-    implementation("com.google.code.gson:gson:2.10")
+    implementation(libs.gson)
 
     // Debugowanie i testy
     debugImplementation(libs.androidx.ui.tooling)
