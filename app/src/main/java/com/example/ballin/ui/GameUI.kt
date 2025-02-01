@@ -31,13 +31,7 @@ import com.example.ballin.model.Ball
 import com.example.ballin.model.Cell
 import com.example.ballin.model.CellType
 
-/**
- * Cache'owanie bitmap – funkcja wykorzystuje remember, by przeskalować
- * i przechować bitmapy przeszkód oraz kulki. Parametry:
- * - cellSize: rozmiar komórki (dla przeszkód, start, cel),
- * - ballDiameter: średnica kulki (2 * radius),
- * W mapie kluczem jest resource ID.
- */
+
 @Composable
 fun rememberScaledBitmaps(cellSize: Float, ballDiameter: Float): Map<Int, ImageBitmap> {
     val context = LocalContext.current
@@ -76,10 +70,6 @@ fun rememberScaledBitmaps(cellSize: Float, ballDiameter: Float): Map<Int, ImageB
     }
 }
 
-/**
- * Główny ekran gry.
- * Parametr selectedBallResource – resource ID kulki wybranej przez użytkownika.
- */
 @Composable
 fun GameScreen(
     ball: Ball,

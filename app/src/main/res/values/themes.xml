@@ -9,7 +9,7 @@
         <item name="colorSecondary">@color/accent</item>
         <item name="colorOnPrimary">@color/highlight</item>
 
-        <item name="android:statusBarColor">@color/primary</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
 
         <!-- Kolor tła aplikacji -->
         <item name="android:windowBackground">@color/primary</item>

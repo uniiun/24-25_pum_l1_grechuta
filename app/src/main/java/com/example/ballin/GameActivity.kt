@@ -13,6 +13,7 @@ import android.os.HandlerThread
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.camera.core.CameraSelector
@@ -25,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
 import com.example.ballin.model.Ball
 import com.example.ballin.model.Cell
 import com.example.ballin.model.CellType
@@ -146,6 +148,8 @@ class GameActivity : ComponentActivity(), SensorEventListener {
         levelManager.addLevelChangeListener {
             updateThemeColor()
         }
+        enableEdgeToEdge()
+        window.statusBarColor = Color.Transparent.toArgb()
 
         // Ustawienie interfejsu
         setContent {
