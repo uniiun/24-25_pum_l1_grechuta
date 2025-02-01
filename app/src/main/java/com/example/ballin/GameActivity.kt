@@ -171,12 +171,12 @@ class GameActivity : ComponentActivity(), SensorEventListener {
                         ball = ball,
                         score = score,
                         grid = grid,
-                        cellSize = cellSize,
                         onPauseClick = { pauseGame() },
                         useCameraBackground = useCameraBackground,
                         themeColor = themeColor,
                         lightLevel = lightLevel,
-                        selectedBallResource = selectedBallDrawable
+                        selectedBallResource = selectedBallDrawable,
+                        originalCellSize = cellSize
                     )
                 }
             }
