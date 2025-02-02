@@ -143,7 +143,8 @@ fun GameScreen(
             ) {
                 Text(
                     text = formatTimeMsToMMSS(score),
-                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp)
+                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 30.sp),
+                    color = Color(0xFFFFB200)
                 )
                 PauseButton(onClick = onPauseClick)
             }

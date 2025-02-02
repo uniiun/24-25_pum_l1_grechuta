@@ -128,7 +128,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
         }
 
         // Inicjalizacja sensorów
-                sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
+        sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
         lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
 
