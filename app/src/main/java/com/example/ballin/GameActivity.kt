@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
 import android.util.Log
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -92,6 +93,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         // Sprawdzenie uprawnień kamery
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
@@ -99,6 +101,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
         } else {
             requestPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
+
 
         // Wczytanie ID poziomu z intencji
         val levelId = intent.getIntExtra("LEVEL_ID", -1)
