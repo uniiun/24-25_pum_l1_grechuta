@@ -325,6 +325,8 @@ class GameActivity : ComponentActivity(), SensorEventListener {
             collisionHandler.refresh()
             updateThemeColor()
         } else {
+            val intent = Intent(this@GameActivity, MainActivity::class.java)
+            startActivity(intent)
             finish()
         }
     }

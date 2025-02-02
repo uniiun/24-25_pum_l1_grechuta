@@ -46,6 +46,7 @@ class LevelManager(private val context: Context) {
             notifyLevelChange()
             Log.d("LevelManager", "Przechodzę do następnego poziomu: ${next.id}")
         } else {
+            currentLevelId = -1
             Log.d("LevelManager", "Nie ma kolejnego poziomu.")
         }
     }
