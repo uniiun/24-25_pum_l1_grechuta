@@ -322,6 +322,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
         val nextLevel = levelManager.getCurrentLevel()
         if (nextLevel != null) {
             setupLevel(nextLevel)
+            collisionHandler.refresh()
             updateThemeColor()
         } else {
             finish()

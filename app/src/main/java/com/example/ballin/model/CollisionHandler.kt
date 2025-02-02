@@ -17,6 +17,9 @@ class CollisionHandler(
     init {
         updateSections()
     }
+    fun refresh() {
+        updateSections()
+    }
 
     private fun updateSections() {
         sections.clear()
@@ -73,7 +76,7 @@ class CollisionHandler(
     }
 
     private fun isInRange(x: Float, y: Float): Boolean {
-        val maxDistance = ball.radius + cellSize * 1.5f
+        val maxDistance = ball.radius + cellSize * 5f
         return (ball.x - x).pow(2) + (ball.y - y).pow(2) < maxDistance.pow(2)
     }
 
