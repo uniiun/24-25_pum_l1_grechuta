@@ -10,7 +10,7 @@ class CollisionHandler(
 ) {
     private val dampingFactor = 0.8f
     private val wallRestitution = 0.5f
-    private val sectionSize = 2
+    private val sectionSize = 1
     private val sections = mutableMapOf<Int, MutableList<Pair<Int, Int>>>()
     private val cellRadius = cellSize / 2
 
