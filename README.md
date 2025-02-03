@@ -73,3 +73,6 @@ Gra ze względu na niewielką ilość przetwarzanych danych wykorzystuje *Shared
 -Żyroskop - do sterowania bohaterem<br />
 -Czujnik światła - do symulacji cyklu dnia i nocy na podstawie jasności otoczenia.<br />
 
+## APK
+https://urstudrzeszow-my.sharepoint.com/:u:/g/personal/pg125184_stud_ur_edu_pl/ESGDN0KSq6JGoLbXxpcZhFkBryQy1u2fp0npZJlrJQ6hWg?e=iZZzIV
+
