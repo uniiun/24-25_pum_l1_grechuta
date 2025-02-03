@@ -17,7 +17,7 @@
         android:theme="@style/Theme.Ballin"
         tools:targetApi="31">
 
-        <!-- MainActivity - Główne menu aplikacji -->
+        <!-- MainActivity -->
         <activity
             android:name=".MainActivity"
             android:screenOrientation="portrait"
@@ -30,7 +30,7 @@
             </intent-filter>
         </activity>
 
-        <!-- GameActivity - Rozgrywka -->
+        <!-- GameActivity -->
         <activity
             android:name=".GameActivity"
             android:screenOrientation="portrait"
@@ -41,8 +41,8 @@
         <!-- LevelSelectActivity -->
         <activity android:name=".LevelSelectActivity" />
 
-        <!-- ColorPickerActivity - Nowa aktywność wyboru koloru -->
-        <activity android:name=".ui.ColorPickerActivity"
+        <!-- ColorPickerActivity -->
+        <activity android:name=".ColorPickerActivity"
             android:exported="true"
             android:theme="@style/Theme.Ballin" />
 

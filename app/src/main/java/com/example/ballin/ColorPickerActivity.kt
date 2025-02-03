@@ -1,28 +1,23 @@
-package com.example.ballin.ui
+package com.example.ballin
 
-import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.ballin.R
 
 class ColorPickerActivity : AppCompatActivity() {
     private lateinit var sharedPreferences: SharedPreferences
     private var selectedColorName: String = "Brak"
-    private var selectedColorDrawable: Int = R.drawable.benson // Domyślny obrazek
+    private var selectedColorDrawable: Int = R.drawable.benson
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_color_picker) // Ustawienie odpowiedniego layoutu
+        setContentView(R.layout.activity_color_picker)
 
-        // Inicjalizacja TextView dla wyświetlenia wybranego koloru
         val selectedBallNameTextView = findViewById<TextView>(R.id.selectedBallName)
 
-        // Obsługa kliknięć dla każdej kulki
         findViewById<ImageView>(R.id.imageBenson).setOnClickListener {
             updateSelection("Benson", R.drawable.benson, selectedBallNameTextView)
         }
@@ -47,14 +42,12 @@ class ColorPickerActivity : AppCompatActivity() {
     private fun updateSelection(ballName: String, ballDrawable: Int, textView: TextView) {
         textView.text = "Wybrana kulka: $ballName"
 
-        // Zapisanie wyboru do SharedPreferences
         val sharedPreferences = getSharedPreferences("GamePreferences", MODE_PRIVATE)
         sharedPreferences.edit().apply {
             putString("selected_ball_name", ballName)
             putInt("selected_ball_drawable", ballDrawable)
         }.apply()
 
-        // Natychmiastowe zakończenie aktywności
         finish()
     }
 

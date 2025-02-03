@@ -47,18 +47,16 @@ class GameActivity : ComponentActivity(), SensorEventListener {
 
     private val gameThread = HandlerThread("GameThread").apply { start() }
     private val gameHandler = Handler(gameThread.looper)
-    private val frameInterval = 16L // 60 FPS (~16 ms)
+    private val frameInterval = 16L // 60 FPS (16 ms)
     private var isRunning = true
 
     private lateinit var levelManager: LevelManager
     private lateinit var sensorManager: SensorManager
     private lateinit var collisionHandler: CollisionHandler
-
     private lateinit var soundManager: SoundManager
     private lateinit var backgroundMusic: MediaPlayer
 
     private var gyroscopeSensor: Sensor? = null
-
     private var ball by mutableStateOf(Ball(x = 0f, y = 0f, dx = 0f, dy = 0f, radius = 50f))
     @Volatile private var rotationX = 0f
     @Volatile private var rotationY = 0f
@@ -100,7 +98,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-        // Sprawdzenie uprawnień kamery
+        // Sprawdzenie uprawnień
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
             setupCamera()
         } else {
@@ -108,24 +106,24 @@ class GameActivity : ComponentActivity(), SensorEventListener {
         }
 
 
-        // Wczytanie ID poziomu z intencji
+        // Wczytanie ID poziomu
         val levelId = intent.getIntExtra("LEVEL_ID", -1)
         if (levelId == -1) {
             finish()
             return
         }
 
-        // Inicjalizacja managera poziomów
+        // Inicjalizacja levelManagera
         levelManager = LevelManager(this).apply {
             loadLevelsFromJson("levels.json")
         }
 
-        // Obliczanie rozmiaru komórek na podstawie ekranu
+        // Obliczanie rozmiaru komórek
         val screenWidth = resources.displayMetrics.widthPixels.toFloat()
         val screenHeight = resources.displayMetrics.heightPixels.toFloat()
         cellSize = minOf(screenWidth / gridWidth, screenHeight / gridHeight)
 
-        // Wczytanie poziomu i konfiguracja
+        // Wczytanie poziomu
         val currentLevel = levelManager.getLevelById(levelId)
         if (currentLevel != null) {
             setupLevel(currentLevel)
@@ -140,6 +138,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
         gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
         lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
 
+        // Obsługa muzyki
         soundManager = SoundManager(this)
 
         val afd = assets.openFd("bg-synth.wav")
@@ -152,14 +151,12 @@ class GameActivity : ComponentActivity(), SensorEventListener {
         collisionHandler = CollisionHandler(ball, grid, cellSize, soundManager)
         startGameLoop()
 
-
-        // Odczyt wybranego koloru kulki z SharedPreferences
+        // Odczyt koloru z SharedPreferences
         val sharedPreferences = getSharedPreferences("GamePreferences", MODE_PRIVATE)
         val selectedBallDrawable = sharedPreferences.getInt("selected_ball_drawable", R.drawable.benson)
         val ballDrawable = AppCompatResources.getDrawable(this, selectedBallDrawable)
         ball.drawable = ballDrawable
 
-        // Nasłuchiwacz zmiany poziomów
         levelManager.addLevelChangeListener {
             updateThemeColor()
         }
@@ -186,12 +183,11 @@ class GameActivity : ComponentActivity(), SensorEventListener {
                         ball = ball,
                         score = score,
                         grid = grid,
+                        originalCellSize = cellSize,
                         onPauseClick = { pauseGame() },
                         useCameraBackground = useCameraBackground,
                         themeColor = themeColor,
-                        lightLevel = lightLevel,
-                        selectedBallResource = selectedBallDrawable,
-                        originalCellSize = cellSize
+                        selectedBallResource = selectedBallDrawable
                     )
                 }
             }
@@ -201,10 +197,10 @@ class GameActivity : ComponentActivity(), SensorEventListener {
     private fun updateThemeColor() {
         val nextLevel = levelManager.getCurrentLevel()
 
-        // Pobierz themeColor z poziomu, jeśli istnieje
+        // Pobieranie themeColor z poziomu
         val baseColor = nextLevel?.themeColor ?: Color.Transparent.toArgb()
 
-        // Dostosuj jasność koloru w zależności od poziomu oświetlenia
+        // Dostosowanie jasność koloru
         themeColor = adjustColorBrightness(baseColor, lightLevel)
 
         Log.d(
@@ -241,12 +237,12 @@ class GameActivity : ComponentActivity(), SensorEventListener {
             }
         }
 
-        // Sprawdzenie zakresów startPosition
+        // Sprawdzenie startPosition
         if (level.startPosition.x !in 0 until gridWidth || level.startPosition.y !in 0 until gridHeight) {
             throw IllegalArgumentException("Start position out of bounds: ${level.startPosition}")
         }
 
-        // Sprawdzenie zakresów goalPosition
+        // Sprawdzenie goalPosition
         if (level.goalPosition.x !in 0 until gridWidth || level.goalPosition.y !in 0 until gridHeight) {
             throw IllegalArgumentException("Goal position out of bounds: ${level.goalPosition}")
         }
@@ -259,7 +255,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
         level.obstacles.forEach { obstacle ->
             if (obstacle.x !in 0 until gridWidth || obstacle.y !in 0 until gridHeight) {
                 Log.e("GameActivity", "Obstacle out of bounds: $obstacle")
-                return@forEach // Ignoruj przeszkodę poza zakresem
+                return@forEach
             }
 
             when (obstacle.type) {
@@ -358,6 +354,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
             }
         })
     }
+
     private fun updateGame() {
         if (isPaused) return
 
@@ -380,7 +377,6 @@ class GameActivity : ComponentActivity(), SensorEventListener {
             score = calculateScore()
         }
     }
-
 
     private fun pauseGame() {
         isPaused = true
@@ -410,6 +406,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
         }
         return accumulatedTime + currentRunningTime
     }
+
     private fun updateBestTimeForLevel(levelId: Int, currentTime: Long) {
         val sharedPreferences = getSharedPreferences("GamePreferences", MODE_PRIVATE)
         val key = "best_time_level_$levelId"

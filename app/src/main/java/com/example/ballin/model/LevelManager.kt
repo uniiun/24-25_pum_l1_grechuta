@@ -9,8 +9,7 @@ class LevelManager(private val context: Context) {
     private val gson = Gson()
     private var levels: List<Level> = emptyList()
 
-    var currentLevelId: Int = -1
-        private set
+    private var currentLevelId: Int = -1
 
     private var levelChangeListeners: MutableList<() -> Unit> = mutableListOf()
 
@@ -51,23 +50,12 @@ class LevelManager(private val context: Context) {
         }
     }
 
-    fun resetToFirstLevel() {
-        val first = levels.minByOrNull { it.id }
-        if (first != null) {
-            currentLevelId = first.id
-        }
-    }
-
     fun getLevels(): List<Level> {
         return levels
     }
 
     fun addLevelChangeListener(listener: () -> Unit) {
         levelChangeListeners.add(listener)
-    }
-
-    fun removeLevelChangeListener(listener: () -> Unit) {
-        levelChangeListeners.remove(listener)
     }
 
     private fun notifyLevelChange() {

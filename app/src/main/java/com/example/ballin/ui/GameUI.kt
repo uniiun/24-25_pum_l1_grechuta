@@ -28,7 +28,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
@@ -113,7 +112,6 @@ fun GameScreen(
     onPauseClick: () -> Unit,
     useCameraBackground: Boolean,
     themeColor: Int,
-    lightLevel: Float,
     selectedBallResource: Int
 ) {
     // Użyjemy jednego dużego Boxa, w którym ułożymy:
@@ -309,7 +307,7 @@ fun LevelBackground(
                     cameraProviderFuture.addListener({
                         val cameraProvider = cameraProviderFuture.get()
                         val preview = androidx.camera.core.Preview.Builder().build().also {
-                            it.setSurfaceProvider(previewView.surfaceProvider)
+                            it.surfaceProvider = previewView.surfaceProvider
                         }
                         val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
                         try {

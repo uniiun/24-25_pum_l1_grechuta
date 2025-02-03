@@ -28,16 +28,16 @@ fun StyledButton(
     Button(
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFFD9165F), // Tło przycisku
-            contentColor = Color(0xFFFFB200)  // Kolor tekstu
+            containerColor = Color(0xFFD9165F),
+            contentColor = Color(0xFFFFB200)
         ),
-        shape = RoundedCornerShape(8.dp), // Lekkie zaokrąglenie rogów
+        shape = RoundedCornerShape(8.dp),
         modifier = modifier
             .height(60.dp)
             .padding(8.dp)
             .shadow(
-                elevation = 4.dp, // Intensywność cienia
-                shape = RoundedCornerShape(8.dp), // Dopasowanie cienia do zaokrąglenia przycisku
+                elevation = 4.dp,
+                shape = RoundedCornerShape(8.dp),
                 clip = false
             )
     ) {
@@ -59,11 +59,11 @@ fun PauseButton(
         modifier = modifier,
 
         colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = Color(0xFFFFB200)    // Kolor ikony i obwódki
+            contentColor = Color(0xFFFFB200)
         ),
     ) {
         Icon(
-            imageVector = Icons.Filled.Pause, // Test działającej ikony
+            imageVector = Icons.Filled.Pause,
             contentDescription = "Pause",
             tint = Color(0xFFFFB200),
             modifier = Modifier.size(48.dp)
