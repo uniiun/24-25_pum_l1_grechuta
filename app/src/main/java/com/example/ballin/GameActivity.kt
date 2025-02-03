@@ -7,6 +7,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
@@ -22,12 +23,14 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.ContextCompat
-import androidx.core.view.WindowCompat
 import com.example.ballin.model.Ball
 import com.example.ballin.model.Cell
 import com.example.ballin.model.CellType
@@ -35,6 +38,7 @@ import com.example.ballin.model.CollisionHandler
 import com.example.ballin.model.Level
 import com.example.ballin.model.LevelManager
 import com.example.ballin.model.ObstacleType
+import com.example.ballin.model.SoundManager
 import com.example.ballin.ui.GameScreen
 import com.example.ballin.ui.PauseScreen
 import com.example.ballin.ui.theme.BallinTheme
@@ -50,29 +54,30 @@ class GameActivity : ComponentActivity(), SensorEventListener {
     private lateinit var sensorManager: SensorManager
     private lateinit var collisionHandler: CollisionHandler
 
+    private lateinit var soundManager: SoundManager
+    private lateinit var backgroundMusic: MediaPlayer
+
     private var gyroscopeSensor: Sensor? = null
 
     private var ball by mutableStateOf(Ball(x = 0f, y = 0f, dx = 0f, dy = 0f, radius = 50f))
     @Volatile private var rotationX = 0f
     @Volatile private var rotationY = 0f
-    private val tempPosition = FloatArray(2)
-    private val tempVelocity = FloatArray(2)
 
-    private var score by mutableStateOf(0L)
+    private var score by mutableLongStateOf(0L)
     private var isPaused by mutableStateOf(false)
     private var useCameraBackground by mutableStateOf(false)
 
     private val gravityFactor = 0.5f
-    private val dampingFactor = 0.98f
+    private val dampingFactor = 0.999f
 
     private val gridWidth = 6
     private val gridHeight = 12
-    private var cellSize by mutableStateOf(0f)
+    private var cellSize by mutableFloatStateOf(0f)
 
-    private var themeColor by mutableStateOf(Color.Transparent.toArgb())
+    private var themeColor by mutableIntStateOf(Color.Transparent.toArgb())
 
     private var lightSensor: Sensor? = null
-    private var lightLevel by mutableStateOf(0f)
+    private var lightLevel by mutableFloatStateOf(0f)
 
     private var levelStartTime: Long = 0L
     private var accumulatedTime: Long = 0L
@@ -135,9 +140,16 @@ class GameActivity : ComponentActivity(), SensorEventListener {
         gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
         lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
 
+        soundManager = SoundManager(this)
 
+        val afd = assets.openFd("bg-synth.wav")
+        backgroundMusic = MediaPlayer().apply {
+            setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+            isLooping = true
+            prepare()
+        }
 
-        collisionHandler = CollisionHandler(ball, grid, cellSize)
+        collisionHandler = CollisionHandler(ball, grid, cellSize, soundManager)
         startGameLoop()
 
 
@@ -186,7 +198,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
         }
     }
 
-    fun updateThemeColor() {
+    private fun updateThemeColor() {
         val nextLevel = levelManager.getCurrentLevel()
 
         // Pobierz themeColor z poziomu, jeśli istnieje
@@ -209,7 +221,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
             val previewView = PreviewView(this).apply {
                 scaleType = PreviewView.ScaleType.FILL_CENTER
             }
-            preview.setSurfaceProvider(previewView.surfaceProvider)
+            preview.surfaceProvider = previewView.surfaceProvider
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
             try {
                 cameraProvider.unbindAll()
@@ -263,6 +275,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
 
     override fun onResume() {
         super.onResume()
+        backgroundMusic.start()
         if (!isPaused) {
             gyroscopeSensor?.let {
                 sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME)
@@ -275,6 +288,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
 
     override fun onPause() {
         super.onPause()
+        backgroundMusic.pause()
         sensorManager.unregisterListener(this)
     }
 
@@ -295,7 +309,7 @@ class GameActivity : ComponentActivity(), SensorEventListener {
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
-    fun adjustColorBrightness(baseColor: Int, lightLevel: Float): Int {
+    private fun adjustColorBrightness(baseColor: Int, lightLevel: Float): Int {
         val color = Color(baseColor)
         val brightnessFactor = when {
             lightLevel > 10000 -> 1.2f
@@ -388,16 +402,6 @@ class GameActivity : ComponentActivity(), SensorEventListener {
         levelStartTime = System.currentTimeMillis()
     }
 
-    private fun calculateThemeColor(lightLevel: Float): Int {
-        return if (lightLevel > 10000) {
-            Color(0xFFFFF59D).toArgb()
-        } else if (lightLevel > 5000) {
-            Color(0xFF90CAF9).toArgb()
-        } else {
-            Color(0xFF37474F).toArgb()
-        }
-    }
-
     private fun calculateScore(): Long {
         val currentRunningTime = if (levelStartTime > 0) {
             System.currentTimeMillis() - levelStartTime
@@ -414,5 +418,10 @@ class GameActivity : ComponentActivity(), SensorEventListener {
             sharedPreferences.edit().putLong(key, currentTime).apply()
             Log.d("GameActivity", "Nowy rekord dla poziomu $levelId: $currentTime ms")
         }
+    }
+    override fun onDestroy() {
+        super.onDestroy()
+        backgroundMusic.release()
+        soundManager.release()
     }
 }

@@ -6,9 +6,6 @@
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.front" android:required="false" />
 
-    <uses-permission android:name="android.permission.VIBRATE"/>
-
-
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -48,7 +45,8 @@
         <activity android:name=".ui.ColorPickerActivity"
             android:exported="true"
             android:theme="@style/Theme.Ballin" />
+
     </application>
 
-    <uses-permission android:name="android.permission.BODY_SENSORS" />
+
 </manifest>

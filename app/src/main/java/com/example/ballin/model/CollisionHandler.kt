@@ -6,7 +6,8 @@ import kotlin.math.sqrt
 class CollisionHandler(
     private val ball: Ball,
     private val grid: Array<Array<Cell>>,
-    private val cellSize: Float
+    private val cellSize: Float,
+    private val soundManager: SoundManager
 ) {
     private val dampingFactor = 0.8f
     private val wallRestitution = 0.5f
@@ -104,6 +105,9 @@ class CollisionHandler(
             ball.dy = -ball.dy * wallRestitution
             collided = true
         }
+        if (collided){
+            soundManager.playSound("pop")
+        }
         return collided
     }
 
@@ -141,6 +145,7 @@ class CollisionHandler(
             ball.dy -= 2 * dot * ny
             ball.dx *= dampingFactor
             ball.dy *= dampingFactor
+            soundManager.playSound("pop")
         }
     }
 
@@ -163,6 +168,7 @@ class CollisionHandler(
             ball.dy -= 2 * dotProduct * ny
             ball.dx *= dampingFactor
             ball.dy *= dampingFactor
+            soundManager.playSound("bush")
         }
     }
 }
