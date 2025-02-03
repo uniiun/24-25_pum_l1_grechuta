@@ -1,109 +1,75 @@
-# **Ballin' – Interaktywna ścieżka projektu**
+Programowanie urządzeń mobilnych laboratorium L_1
 
-[x] ## **Milestone 1: Inicjalizacja projektu**
-- [x] Utwórz nowy projekt w Android Studio.
-- [x] Skonfiguruj minimalny SDK i dependencies:
-  - [x] `CameraX`
-  - [x] `Room` lub SQLite
-  - [x] `SensorManager`
-- [x] Utwórz pliki strukturalne:
-  - [x] `MainActivity`
-  - [x] `GameActivity`
-  - [x] `LevelManager`
-- [x] Przygotuj ekran startowy z prostym tekstem ("Ballin' Start").
+# Dokumentacja projetu: Gra logiczna Ballin
 
----
+## Zespoł projetowy:
+Paweł Grechuta
 
-## **Milestone 2: Mechanika sterowania**
-- [x] Odczytuj dane z żyroskopu za pomocą API `SensorManager`.
-- [x] Stwórz klasę `Ball` z podstawowymi atrybutami:
-  - [x] Pozycja.
-  - [x] Prędkość.
-- [x] Zaimplementuj ruch kulki w ograniczonym obszarze (Canvas/SurfaceView).
-- [x] Dodaj podstawową grawitację (kulka spada i odbija się od ścian).
+## Opis projektu
+Ballin' to gra logiczno-zręcznościowa, w której gracz musi przemierzać kolejne światy sterując ich grawitacją za pomocą żyroskopu telefonu. Światy (poziomy) gry reagują na otaczający gracza świat rzeczywisty poprzez czujniki telefonu.
 
----
+## Zarys fabuły
+Benson, znany w swoim świecie jako Ballin' Bounce, to legendarna kulka i prawdziwy mistrz akrobatyki. Jest kaskaderem, który podbija serca widzów swoimi niesamowitymi wyczynami. Podczas swojego ostatniego, transmitowanego na cały świat wydarzenia, sponsorowanego przez gigantyczną markę Red Ball, Benson podjął się próby pobicia rekordu świata w najwyższym odbiciu od ziemi.
+Niestety, coś poszło nie tak – jego skok był tak potężny, że przebił granice rzeczywistości i wylądował w tajemniczym, malutkim wymiarze. Benson musi teraz eksplorować ten dziwny świat, pełen niezwykłych mostów.
 
-## **Milestone 3: System poziomów – wstępna struktura**
-- [x] Zaprojektuj strukturę poziomów (JSON lub SQLite).
-- [x] Stwórz klasę `Level`:
-  - [x] Wymiary planszy.
-  - [x] Pozycja startowa kulki.
-  - [x] Lista przeszkód.
-  - [x] Cel (pozycja końcowa).
-- [x] Zaimplementuj `LevelManager` do ładowania poziomów z JSON.
-- [x] Utwórz testowy poziom.
+## Zakres projektu opis funkcjonalności:
+ **Sterowanie za pomocą żyroskopu**
+- Gra wykorzystuje wbudowany w urządzenie sensor żyroskopowy do sterowania ruchem postaci.
+- Dane z sensora są odczytywane i przetwarzane w czasie rzeczywistym, umożliwiając płynne i intuicyjne sterowanie.
+- Ruch kulki w grze jest proporcjonalny do nachylenia urządzenia, co pozwala na precyzyjne manewrowanie po planszy.
 
----
+ **Personalizacja koloru postaci**
+- Gra oferuje interaktywny ekran ustawień, gdzie gracz może wybrać kolor Bensona z wykorzystaniem palety RGB lub predefiniowanych zestawów kolorów.
+- Wybrany kolor jest zapisywany lokalnie w *SharedPreferences*, dzięki czemu ustawienia są zachowywane między sesjami.
+- Zmiana koloru jest natychmiastowa i widoczna w czasie rzeczywistym w interfejsie gry.
 
-## **Milestone 4: Detekcja kolizji i przeszkody**
-- [ ] Dodaj przeszkody:
-  - [ ] Prostokątne przeszkody.
-  - [ ] Okrągłe przeszkody.
-- [ ] Zaimplementuj detekcję kolizji:
-  - [ ] Prostokąt – kulka.
-  - [ ] Okrąg – kulka.
-- [ ] Dodaj reakcję kulki na kolizję (odbicie pod odpowiednim kątem).
+ **Zmienny świat bazujący na obrazie z kamery**
+- Gra integruje obraz z tylnej kamery urządzenia jako dynamiczne tło dla poziomów.
+- Wideo z kamery jest przechwytywane i przepuszczane przez niestandardowy filtr obrazu.
+- Przetwarzanie obrazu odbywa się w czasie rzeczywistym przy minimalnym opóźnieniu, zapewniając płynną animację tła.
 
----
+ **Cykl dnia i nocy bazujący na czujniku światła**
+- Gra wykorzystuje wbudowany w urządzenie sensor oświetlenia (Light Sensor), aby odczytywać natężenie światła otoczenia.
+- Na podstawie wartości natężenia światła gra dynamicznie zmienia kolorystykę tła, symulując różne pory dnia:
+  - **Wysokie natężenie światła** → Jasne tło.
+  - **Niskie natężenie światła** → Ciemne tło.
+- Zmiany te są płynne i zależne od rzeczywistych warunków otoczenia, co zwiększa immersję.
 
-## **Milestone 5: Prototyp UI i poziomy**
-- [ ] Stwórz prototypowy layout menu głównego:
-  - [ ] Przycisk "Start".
-  - [ ] Przycisk "Ustawienia".
-  - [ ] Przycisk "Wyjście".
-- [ ] Stwórz layout poziomu gry (placeholdery dla elementów graficznych).
-- [ ] Dodaj kilka poziomów testowych (np. 3 poziomy o rosnącym stopniu trudności).
+**Obsługa muzyki oraz efektów dźwiękowych**
+- Gra reaguje na kolizje gracza z przeszkodami
+- Podczas przechodzenia poziomów graczowi przygrywa muzyka
 
----
+**Obsługa najlepszych wyników**
+- Na ekranie wyboru poziomów obok każdego przycisku znajduje się najlepszy czas jego przejścia
+- Podczas pauzy czas nie jest liczony
 
-## **Milestone 6: Ruchome przeszkody i logika poziomów**
-- [ ] Dodaj ruchome przeszkody:
-  - [ ] Przeszkody poruszające się po linii prostej.
-  - [ ] Kontrolowanie prędkości ruchu przeszkód.
-- [ ] Sprawdź poprawność kolizji kulki z ruchomymi przeszkodami.
-- [ ] Dodaj logikę poziomów:
-  - [ ] Sprawdzenie, czy kulka osiągnęła cel.
-  - [ ] Przejście do następnego poziomu.
+## Panele / zakładki aplikacji 
+- Menu główne <br /> <br />
+![menu](https://github.com/user-attachments/assets/f3308bb2-ffa0-4f59-98de-6629b6358639)
 
----
 
-## **Milestone 7: Integracja grafiki i animacji**
-- [ ] Dodaj grafikę kulki (np. `.png`).
-- [ ] Zamień przeszkody na obrazy.
-- [ ] Dodaj animacje:
-  - [ ] Ruch kulki.
-  - [ ] Ruch przeszkód.
+- Wybór poziomów <br /> <br />
+![level-select](https://github.com/user-attachments/assets/1812ca52-5145-4056-816c-d3bf8565c64c)
 
----
 
-## **Milestone 8: System poziomów – finalizacja**
-- [ ] Dodaj finalne poziomy do gry (np. 10 poziomów o różnej trudności).
-- [ ] Przenieś poziomy do SQLite, jeśli JSON nie jest wystarczający.
-- [ ] Testuj poziomy pod kątem balansu grywalności.
+- Zmiana koloru Bensona <br /> <br />
+![color-select](https://github.com/user-attachments/assets/b4b9dd52-5469-4762-bc10-c8b8f8dc1d96)
 
----
 
-## **Milestone 9: Wibracje i efekty wizualne**
-- [ ] Dodaj wibracje podczas kolizji (API Vibrator).
-- [ ] Dodaj efekty wizualne (np. zmiana koloru tła przy wygranej).
-- [ ] Zintegruj filtry obrazu na tle kamery.
+- Ekran gry <br /> <br />
+![game](https://github.com/user-attachments/assets/dfbac168-583a-4aed-8ddf-2c36d95d635b)
+![game-cam](https://github.com/user-attachments/assets/440e402b-9a7d-4a47-8b6b-663bd43c7e3f)
 
----
 
-## **Milestone 10: Optymalizacja i publikacja**
-- [ ] Testuj wydajność na różnych urządzeniach.
-- [ ] Optymalizuj ładowanie poziomów i przetwarzanie obrazu.
-- [ ] Przygotuj finalne layouty, ikonę aplikacji i zasoby graficzne.
-- [ ] Publikuj aplikację w Google Play Store.
+- Menu pauzy <br /> <br />
+![pause](https://github.com/user-attachments/assets/6597b85d-0323-4530-a066-b7fa156edd8b)
 
-##TODO
-naprawić filtry kolorów poziomów
-dodać wybór koloru kulki
-zrobić padding wokół siatki mapy aby działało skalowanie dla róznych urządzeń i wyświetlało się tło
-wstawić grafiki kulek przeszkód i tła poziomu gdy kamera jest wyłączona
-dodać wibrację przy kolizji
-poprawić sterowanie i fizykę gry
-dodać bazę i zrobić high score
-optymalizacja
+
+## Baza danych
+Gra ze względu na niewielką ilość przetwarzanych danych wykorzystuje *SharedPreferences* przechowujące najlepsze wyniki oraz wybraną przez gracza postać
+
+## Wykorzystane uprawnienia aplikacji do:
+-Aparat - do wyświetlania obrazu z kamery jako dynamicznego tła.
+-Żyroskop - do sterowania bohaterem
+-Czujnik światła - do symulacji cyklu dnia i nocy na podstawie jasności otoczenia.
 
