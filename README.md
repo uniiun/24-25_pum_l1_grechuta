@@ -69,7 +69,7 @@ Niestety, coś poszło nie tak – jego skok był tak potężny, że przebił gr
 Gra ze względu na niewielką ilość przetwarzanych danych wykorzystuje *SharedPreferences* przechowujące najlepsze wyniki oraz wybraną przez gracza postać
 
 ## Wykorzystane uprawnienia aplikacji do:
--Aparat - do wyświetlania obrazu z kamery jako dynamicznego tła.
--Żyroskop - do sterowania bohaterem
--Czujnik światła - do symulacji cyklu dnia i nocy na podstawie jasności otoczenia.
+-Aparat - do wyświetlania obrazu z kamery jako dynamicznego tła.<br />
+-Żyroskop - do sterowania bohaterem<br />
+-Czujnik światła - do symulacji cyklu dnia i nocy na podstawie jasności otoczenia.<br />
 
