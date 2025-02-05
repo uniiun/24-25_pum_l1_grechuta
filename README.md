@@ -1,9 +1,7 @@
-Programowanie urządzeń mobilnych laboratorium L_1
-
 # Dokumentacja projetu: Gra logiczna Ballin
 
 ## Zespoł projetowy:
-Paweł Grechuta
+Paweł G.
 
 ## Opis projektu
 Ballin' to gra logiczno-zręcznościowa, w której gracz musi przemierzać kolejne światy sterując ich grawitacją za pomocą żyroskopu telefonu. Światy (poziomy) gry reagują na otaczający gracza świat rzeczywisty poprzez czujniki telefonu.
@@ -73,6 +71,4 @@ Gra ze względu na niewielką ilość przetwarzanych danych wykorzystuje *Shared
 -Żyroskop - do sterowania bohaterem<br />
 -Czujnik światła - do symulacji cyklu dnia i nocy na podstawie jasności otoczenia.<br />
 
-## APK
-https://urstudrzeszow-my.sharepoint.com/:u:/g/personal/pg125184_stud_ur_edu_pl/ESGDN0KSq6JGoLbXxpcZhFkBryQy1u2fp0npZJlrJQ6hWg?e=iZZzIV
 
